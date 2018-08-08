@@ -3,6 +3,7 @@ library("DESeq2")
 library("RColorBrewer")
 library(pheatmap)
 library("IHW")
+library(biomaRt)
 
 #####################
 ## DESeq2 Analysis ##
@@ -19,7 +20,6 @@ CFZ_6hr <- read.csv("CFZ_genes_6hr.csv", row.names = 1, check.names = FALSE)
 coldata_6 <- read.csv("coldata_6hr.csv", row.names = 1)
 CFZ_24hr <- read.csv("CFZ_genes_24hr.csv", row.names = 1, check.names = FALSE)
 coldata_24 <- read.csv("coldata_24hr.csv", row.names = 1)
-
 
 ## Set-up dds data from DESeq function ##
 ## ----------------------------------- ##
@@ -76,12 +76,35 @@ plotMA(res_22_lfc, ylim = c(-2,2))
 rld <- rlog(dds, blind=FALSE) # or vts function 
 
 # PCA plot
-plotPCA(rld, intgroup=c("Compound"))
+plotPCA(rld, intgroup="Compound")
 
-#pca_6 <- plotPCA(rld, intgroup=c("Compound"), returnData = TRUE)
+# test for getting PCA data
+rv <- rowVars(assay(rld))
+select_rv <- order(rv, decreasing = TRUE)[seq_len(min(500, 
+                                                   length(rv)))]
+pca <- prcomp(t(assay(rld)[select_rv, ]))
+
+pca_rot <- as.data.frame(pca$rotation[,1:2])
+pca_PC2 <- pca_rot[rev(order(pca_rot$PC2)),] # Order by genes contributing most variation to PC2
+
+pca_6 <- plotPCA(rld, intgroup=c("Compound"), returnData = TRUE)
 # CFZ-22-t6-r3 seems to be an outlier
 
-# Heat map
+######## Investigate PCA outlier ######## 
+
+genes_22 <- select(CFZ_6hr, contains("-22-"))
+keep <- rowSums(genes_22) >= 20
+genes_22 <- genes_22[keep,]
+genes_22 <- filter(genes_22, !is.na(genes_22))
+  
+pca_PC2_large <- pca_PC2[1:50,]
+genes_22_pc2 <- genes_22[row.names(pca_PC2_large),]
+
+genes_22_pc2 <- transform(genes_22_pc2, percent= abs(`CFZ-22-t6-r3` - mean(c(`CFZ-22-t6-r1`, `CFZ-22-t6-r2`)))/mean(c(`CFZ-22-t6-r1`, `CFZ-22-t6-r2`)), check.names = FALSE)
+genes_22_pc2
+
+########
+# Heat map, explore clusters
 sampleDists <- dist(t(assay(rld)))
 sampleDistMatrix <- as.matrix(sampleDists)
 rownames(sampleDistMatrix) <- rld$Compound
@@ -131,7 +154,6 @@ sum(results24_26$padj < 0.05, na.rm=TRUE)
 res24_26_lfc <- lfcShrink(dds_deseq24, coef = 2, res = results24_26)
 res24_22_lfc <- lfcShrink(dds_deseq24, coef = 2, res = results24_22)
 
-
 ## MA-plot
 plotMA(results24_26, ylim = c(-2,2))
 plotMA(res24_26_lfc, ylim = c(-2,2))
@@ -156,11 +178,44 @@ pheatmap(sampleDistMatrix,
          clustering_distance_cols=sampleDists,
          col=colors)
 
+######################################
+## Differential Expression Analysis ##
+######################################
+
+# Load ensembl human gene names
+ensembl = useEnsembl(biomart="ensembl", dataset="hsapiens_gene_ensembl", GRCh=37)
+gene_keys <- getBM(attributes=c('ensembl_gene_id', 'hgnc_symbol'), mart = ensembl)
+gene_keys <- gene_keys[!(is.na(gene_keys$hgnc_symbol) | gene_keys$hgnc_symbol==""), ] # removing blank rows makes some not match
+gene_keys <- gene_keys[!duplicated(gene_keys$ensembl_gene_id),]
+
+all(rownames(res_26_lfc) %in% gene_keys$ensembl_gene_id)
+
+keep_geneid <- rownames(res_26_lfc) %in% gene_keys$ensembl_gene_id
 
 
-# test for getting PCA data
-rv <- rowVars(assay(rld24))
-select <- order(rv, decreasing = TRUE)[seq_len(min(500, 
-                                                   length(rv)))]
-pca <- prcomp(t(assay(rld24)[select, ]))
+gene26_keys <- gene_keys_26[rownames(res_26_lfc),]
+
+res_26_lfc <- lfcShrink(dds_deseq, contrast = c("Compound", "26", "DMSO"), res = results_26)
+res_22_lfc <- lfcShrink(dds_deseq, contrast = c("Compound", "22", "DMSO"), res = results_22)
+res_13_lfc <- lfcShrink(dds_deseq, contrast = c("Compound", "13", "DMSO"), res = results_13)
+res_18_lfc <- lfcShrink(dds_deseq, contrast = c("Compound", "18", "DMSO"), res = results_18)
+
+# Remove NA rows and rows with p values greater than 0.5
+res_26_lfc <- res_26_lfc[!is.na(res_26_lfc$padj) & res_26_lfc$padj<= 0.05,] 
+res_26_lfc <- res_26_lfc[(order(res_26_lfc$padj)),]
+res_26_lfc <- res_26_lfc[rev(order(abs(res_26_lfc$log2FoldChange))),]
+top_lfc_26 <- res_26_lfc[1:50,]
+all(rownames(top_lfc_26) %in% gene_keys$ensembl_gene_id)
+gene_key_unique <- as.data.frame(gene_keys)[-1]
+rownames(gene_key_unique) <-  as.data.frame(gene_keys)[,1]
+
+
+
+res_22_lfc <- res_22_lfc[!is.na(res_22_lfc$padj) & res_22_lfc$padj<= 0.05,]
+res_13_lfc <- res_13_lfc[!is.na(res_13_lfc$padj) & res_13_lfc$padj<= 0.05,]
+res_13_lfc <- res_13_lfc[rev(order(abs(res_13_lfc$log2FoldChange))),]
+top_lfc_13 <- res_13_lfc[1:50,]
+
+res_18_lfc <- res_18_lfc[!is.na(res_18_lfc$padj) & res_18_lfc$padj<= 0.05,]
+
 
