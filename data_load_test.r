@@ -1,9 +1,10 @@
 library(tidyverse)
 library("DESeq2")
-library(readxl)
-library("RColorBrewer")
-library(pheatmap)
+library("IHW")
 
+##################################
+## Importing kallisto gene data ##
+##################################
 
 gene_tib <- read_tsv("/home/osboxes/Documents/analysis/quant/kallisto.dir/genes.tsv.gz")
 gene_tib2 <- as.data.frame(gene_tib)[-1]
@@ -25,15 +26,9 @@ colnames(gene_tib2) <-gsub("^i[0-9][0-9]-","",colnames(gene_tib2))
 # Genes going down, sample name going along
 CFZ_genes <- select(gene_tib2, -contains("WT"))
 
-
 # Separate by time points, might need to move later
 CFZ_6hr <- select(CFZ_genes, -contains("t24"))
 CFZ_24hr <- select(CFZ_genes, -contains("t6"))
-
-# Read in sample sheet
-#coldata <- read_excel("/home/osboxes/Documents/analysis/AMO-CFZ_RNA-Seq/sample_sheet.xlsx")
-#names(coldata)[1] <- "SampleName"
-#coldata <- read.csv("/home/osboxes/Documents/analysis/AMO-CFZ_RNA-Seq/sample_sheet.xlsx", row.names =1)
 
 coldata <- read.csv("/home/osboxes/Documents/analysis/AMO-CFZ_RNA-Seq/sample_sheet2.csv", row.names =1)
 coldata <- coldata[-1]
@@ -41,7 +36,6 @@ names(coldata) <- c("Compound", "TimePoint")
 
 # Replace underscores for hyphens
 rownames(coldata) <- gsub("_","-",rownames(coldata))
-
 
 # Ensure the rows of sample sheet match the columns of the gene matrix
 rownames(coldata)
@@ -69,65 +63,14 @@ coldata_24 <- coldata[coldata$TimePoint == 24, ]
 all(rownames(coldata_6) == colnames(CFZ_6hr)) # TRUE
 all(rownames(coldata_24) == colnames(CFZ_24hr)) # TRUE
 
-## DESeq2 data set ##
-## --------------- ##
-# 6hr
-dds <-  DESeqDataSetFromMatrix(countData = CFZ_6hr,
-                               colData = coldata_6,
-                               design = ~ Compound)
-dds
+## Write CSV files of data ##
+## ----------------------- ##
+write.csv(CFZ_genes, file = "CFZ_genes.csv")
+write.csv(CFZ_6hr, file = "CFZ_genes_6hr.csv")
+write.csv(CFZ_24hr, file = "CFZ_genes_24hr.csv")
 
-###################
-## Pre-filtering ##
-###################
-# Keep only rows with reads over 10 counts, so that memory of object is reduced
-keep <- rowSums(counts(dds)) >= 10
-dds <- dds[keep,]
-dds
-
-# Set the reference (control) level/ factor, against which others will be compared
-dds$Compound <- relevel(dds$Compound, ref = "DMSO")
-
-## Collapse technical replicates??? (Ask adam) ##
-# If you collapse technical replicates will we lose all our variation?
-
-# Contrasting compounds against DMSO, using p adjusted value of 5% as cut off.
-dds_deseq <- DESeq(dds)
-results_26 <- results(dds_deseq, contrast = c("Compound", "26", "DMSO"), alpha = 0.05)
-results_22 <- results(dds_deseq, contrast = c("Compound", "22", "DMSO"), alpha = 0.05)
-results_13 <- results(dds_deseq, contrast = c("Compound", "13", "DMSO"), alpha = 0.05)
-results_18 <- results(dds_deseq, contrast = c("Compound", "18", "DMSO"), alpha = 0.05)
-results_26_p <- results_26[!is.na(results_26$padj) & results_26$padj<= 0.05,]
-results_22_p <- results_22[!is.na(results_22$padj) & results_22$padj<= 0.05,]
-results_13_p <- results_13[!is.na(results_13$padj) & results_13$padj<= 0.05,]
-results_18_p <- results_18[!is.na(results_18$padj) & results_18$padj<= 0.05,]
-
-summary(results_26)
-sum(results_26$padj < 0.05, na.rm=TRUE)
-
-## MLE used here, ask about MAP?
-# Results log2 fold change (LFC) #
-res_26_lfc <- lfcShrink(dds_deseq, coef = 2, res = results_26)
-res_22_lfc <- lfcShrink(dds_deseq, coef = 2, res = results_22)
+write.csv(coldata, file = "coldata.csv")
+write.csv(coldata_6, file = "coldata_6hr.csv")
+write.csv(coldata_24, file = "coldata_24hr.csv")
 
 
-## MA-plot
-plotMA(results_26, ylim = c(-2,2))
-plotMA(res_26_lfc, ylim = c(-2,2))
-
-plotMA(results_22, ylim = c(-2,2))
-plotMA(res_22_lfc, ylim = c(-2,2))
-
-rld <- rlog(dds, blind=FALSE)
-
-plotPCA(rld, intgroup=c("Compound"))
-
-sampleDists <- dist(t(assay(rld)))
-sampleDistMatrix <- as.matrix(sampleDists)
-rownames(sampleDistMatrix) <- rld$Compound
-colnames(sampleDistMatrix) <- NULL
-colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
-pheatmap(sampleDistMatrix,
-         clustering_distance_rows=sampleDists,
-         clustering_distance_cols=sampleDists,
-         col=colors)
