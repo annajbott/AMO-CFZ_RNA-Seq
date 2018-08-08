@@ -14,7 +14,6 @@ head(gene_tib2)
 #transcripts_tib <- read_tsv("/home/osboxes/Documents/analysis/quant/kallisto.dir/transcripts.tsv.gz")
 
 # Looking at data structure
-glimpse(gene_tib2)
 summary(gene_tib2)
 
 # Remove sample number at the end
