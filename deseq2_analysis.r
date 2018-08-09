@@ -4,6 +4,7 @@ library("RColorBrewer")
 library(pheatmap)
 library("IHW")
 library(biomaRt)
+source("fun.R")
 
 #####################
 ## DESeq2 Analysis ##
@@ -192,22 +193,28 @@ all(rownames(res_26_lfc) %in% gene_keys$ensembl_gene_id)
 
 keep_geneid <- rownames(res_26_lfc) %in% gene_keys$ensembl_gene_id
 
-
 gene26_keys <- gene_keys_26[rownames(res_26_lfc),]
 
-res_26_lfc <- lfcShrink(dds_deseq, contrast = c("Compound", "26", "DMSO"), res = results_26)
-res_22_lfc <- lfcShrink(dds_deseq, contrast = c("Compound", "22", "DMSO"), res = results_22)
-res_13_lfc <- lfcShrink(dds_deseq, contrast = c("Compound", "13", "DMSO"), res = results_13)
-res_18_lfc <- lfcShrink(dds_deseq, contrast = c("Compound", "18", "DMSO"), res = results_18)
+# 6 hour results, order padj all under 0.05 in order of magnitude (descending) of log2 fold change.
+res_26_lfc <- results_process(dds_deseq, contrast = c("Compound", "26", "DMSO"), alpha = 0.05 )
+res_22_lfc <- results_process(dds_deseq, contrast = c("Compound", "22", "DMSO"), alpha = 0.05 )
+res_13_lfc <- results_process(dds_deseq, contrast = c("Compound", "13", "DMSO"), alpha = 0.05 )
+res_18_lfc <- results_process(dds_deseq, contrast = c("Compound", "18", "DMSO"), alpha = 0.05 )
+# NCP 22 has no genes with adj p value under 0.05.
 
-# Remove NA rows and rows with p values greater than 0.5
-res_26_lfc <- res_26_lfc[!is.na(res_26_lfc$padj) & res_26_lfc$padj<= 0.05,] 
-res_26_lfc <- res_26_lfc[(order(res_26_lfc$padj)),]
-res_26_lfc <- res_26_lfc[rev(order(abs(res_26_lfc$log2FoldChange))),]
+# 24 hour results
+res_26_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "26", "DMSO"), alpha = 0.05 )
+res_22_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "22", "DMSO"), alpha = 0.05 )
+res_13_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "13", "DMSO"), alpha = 0.05 )
+res_18_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "18", "DMSO"), alpha = 0.05 )
+# NCP 22 and MAZ 18 compounds have no genes with a padj value <0.05, compared to DMSO. 
+
 top_lfc_26 <- res_26_lfc[1:50,]
 all(rownames(top_lfc_26) %in% gene_keys$ensembl_gene_id)
 gene_key_unique <- as.data.frame(gene_keys)[-1]
 rownames(gene_key_unique) <-  as.data.frame(gene_keys)[,1]
+
+
 
 
 
