@@ -107,7 +107,12 @@ pca_rot24 <- as.data.frame(pca24$rotation[,1:2]) # See PC1 and PC2
 PC1_top24 <- pca_rot[rev(order(pca_rot24$PC1)),] # Order by genes contributing most variation to PC1
 
 # Take the top 50 contributing genes from 6 hour and 24 hour and take the distinct genes
-string_genes <- (unique(c(rownames(PC1_top)[1:50], rownames(PC1_top24)[1:50])))
+gene_join <- c()
+for(i in 1:50){
+  gene_join <- c(gene_join, rownames(PC1_top)[i], rownames(PC1_top24)[i])
+}
+string_genes <- unique(gene_join)[1:50]
+#string_genes <- unique(c(rownames(PC1_top)[1:50], rownames(PC1_top24)[1:50])) # Bias towards 6 hour genes being nearer the top
 genes_data <- gene_id_name_raw(string_genes)
 
 ## Explore outliers ##

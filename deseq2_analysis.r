@@ -96,6 +96,13 @@ top50_res_18_lfc <- gene_id_name(res_18_lfc)
 top50_res_26_lfc_24 <- gene_id_name(res_26_lfc_24)
 top50_res_13_lfc_24 <- gene_id_name(res_13_lfc_24)
 
+
+##
+# top 50 genes involved
+cbind(rownames(top50_res_26_lfc)[1:50], top50_res_26_lfc$gene_name[1:50])
+genes_6_top <- as.data.frame(cbind(rownames(top50_res_26_lfc)[1:50], top50_res_26_lfc$gene_name[1:50]))
+colnames(genes_6_top) <- c("ensembl_gene_id", "hgnc_symbol")
+
 ##
 
 # Assorted mess #
