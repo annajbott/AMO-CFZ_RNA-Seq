@@ -6,8 +6,11 @@ library("IHW")
 library(biomaRt)
 source("fun.R")
 
-## PCA cluster investigation ##
-# minus outlier, see which genes contribute the most to PC1
+##################################
+## Principal Component Analyses ##
+##################################
+
+# minus outliers, see which genes contribute the most to PC1
 
 ## Load gene data from CSV files ##
 ## ----------------------------- ##
@@ -15,7 +18,7 @@ source("fun.R")
 CFZ_genes <- read.csv("CFZ_genes.csv", row.names = 1, check.names = FALSE)
 coldata <- read.csv("coldata.csv", row.names = 1)
 
-# From PCA plots can see
+# From PCA plots and data from 'returnData' pca option
 # outlier 6hr: CFZ-22-t6-r3
 # outlier 24hr: CFZ-DMSO-t24-r2, CFZ-18-t24-r3, ?CFZ-26-t24-r1?
 outlier_row_column_list <- c(which(rownames(coldata) == "CFZ-18-t24-r3"),which(rownames(coldata) == "CFZ-DMSO-t24-r2"),which(rownames(coldata) == "CFZ-22-t6-r3"))
@@ -103,4 +106,11 @@ PC1_top <- pca_rot[rev(order(pca_rot$PC1)),] # Order by genes contributing most 
 pca_rot24 <- as.data.frame(pca24$rotation[,1:2]) # See PC1 and PC2
 PC1_top24 <- pca_rot[rev(order(pca_rot24$PC1)),] # Order by genes contributing most variation to PC1
 
-unique(c(rownames(PC1_top)[1:50], rownames(PC1_top24)[1:50]))
+# Take the top 50 contributing genes from 6 hour and 24 hour and take the distinct genes
+string_genes <- (unique(c(rownames(PC1_top)[1:50], rownames(PC1_top24)[1:50])))
+genes_data <- gene_id_name_raw(string_genes)
+
+## Explore outliers ##
+## ---------------- ##
+
+# Look at variation along specific axis for outliers, see if genes contributing are involved in specific pathway, e.g. inflammatory
