@@ -115,7 +115,12 @@ string_genes <- unique(gene_join)[1:50]
 #string_genes <- unique(c(rownames(PC1_top)[1:50], rownames(PC1_top24)[1:50])) # Bias towards 6 hour genes being nearer the top
 genes_data <- gene_id_name_raw(string_genes)
 
+## write csv for top 50 genes contributing to clustering ##
+## ----------------------------------------------------- ##
+write.csv(genes_data, file = "top50_PC1.csv", row.names = FALSE)
+
 ## Explore outliers ##
 ## ---------------- ##
 
 # Look at variation along specific axis for outliers, see if genes contributing are involved in specific pathway, e.g. inflammatory
+# Later...
