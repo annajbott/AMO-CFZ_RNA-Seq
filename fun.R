@@ -12,7 +12,7 @@ results_process <- function(dds, contrast, alpha){
 }
 
 ## Function for hashing gene id to name
-gene_id_name <- function(ordered_results, top = 50){
+gene_id_name <- function(ordered_results, top = 50, id_name_table = FALSE){
   ensembl = useEnsembl(biomart="ensembl", dataset="hsapiens_gene_ensembl", GRCh=37)
   gene_keys <- getBM(attributes=c('ensembl_gene_id', 'hgnc_symbol'), mart = ensembl)
   #gene_keys <- gene_keys[!duplicated(gene_keys$ensembl_gene_id),]
@@ -23,12 +23,23 @@ gene_id_name <- function(ordered_results, top = 50){
     break
   }
   top_lfc$gene_name <- NA
+  top_lfc$OverExpressed <- NA
   for(i in 1:nrow(top_lfc)){
     gene_id <- rownames(top_lfc)[i]
     name <- filter(gene_keys, gene_keys$ensembl_gene_id == gene_id)[1,2]
-    top_lfc[i,ncol(top_lfc)] <- name
+    top_lfc[i,ncol(top_lfc) -1] <- name
+    top_lfc[i,ncol(top_lfc)] <- ifelse(top_lfc[i,2] >= 1,  TRUE, FALSE)
   }
-  return(top_lfc)
+  # Output includes log fold change and p values etc. table
+  final <- top_lfc[,-ncol(top_lfc)]
+  # output is just gene id vs gene name for the top statistically significant, largest log fold change genes
+  if(id_name_table == TRUE){
+    # top 50 genes involved
+    gene_top <- as.data.frame(cbind(rownames(top_lfc)[1:50], top_lfc$gene_name[1:50],top_lfc$OverExpressed[1:50]))
+    colnames(gene_top) <- c("ensembl_gene_id", "hgnc_symbol", "OverExpressed")
+    final <- gene_top
+  }
+  return(final)
 }
 
 gene_id_name_raw <- function(string_vector){
@@ -43,3 +54,6 @@ gene_id_name_raw <- function(string_vector){
   data_frame_genes <- data_frame_genes[!(is.na(data_frame_genes$hgnc_symbol) | data_frame_genes$hgnc_symbol==""), ]
   return(data_frame_genes)
 }
+
+
+'%!in%' <- function(x,y)!('%in%'(x,y))
