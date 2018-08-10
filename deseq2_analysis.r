@@ -75,7 +75,6 @@ dds_deseq24 <- DESeq(dds_24)
 
 # 6 hour results, order padj all under 0.05 in order of magnitude (descending) of log2 fold change.
 res_26_lfc <- results_process(dds_deseq, contrast = c("Compound", "26", "DMSO"), alpha = 0.05 )
-
 res_22_lfc <- results_process(dds_deseq, contrast = c("Compound", "22", "DMSO"), alpha = 0.05 )
 res_13_lfc <- results_process(dds_deseq, contrast = c("Compound", "13", "DMSO"), alpha = 0.05 )
 res_18_lfc <- results_process(dds_deseq, contrast = c("Compound", "18", "DMSO"), alpha = 0.05 )
@@ -89,21 +88,34 @@ res_18_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "18", "DM
 # NCP 22 and MAZ 18 compounds have no genes with a padj value <0.05, compared to DMSO. 
 
 # Add gene names to tables
-top50_res_26_lfc <- gene_id_name(res_26_lfc)
-top50_res_13_lfc <- gene_id_name(res_13_lfc)
-top50_res_18_lfc <- gene_id_name(res_18_lfc)
+top50_res_26_lfc <- gene_id_name(res_26_lfc, id_name_table = TRUE)
+top50_res_26_lfc$Compound <- "26"
+top50_res_26_lfc$TimePoint <- 6
+top50_res_13_lfc <- gene_id_name(res_13_lfc, id_name_table = TRUE)
+top50_res_13_lfc$Compound <- "13"
+top50_res_13_lfc$TimePoint <- 6
+top50_res_18_lfc <- gene_id_name(res_18_lfc, id_name_table = TRUE)
+top50_res_18_lfc$Compound <- "18"
+top50_res_18_lfc$TimePoint <- 6
 # 24
-top50_res_26_lfc_24 <- gene_id_name(res_26_lfc_24)
-top50_res_13_lfc_24 <- gene_id_name(res_13_lfc_24)
+top50_res_26_lfc_24 <- gene_id_name(res_26_lfc_24, id_name_table = TRUE)
+top50_res_26_lfc_24$Compound <- "26"
+top50_res_26_lfc_24$TimePoint <- 24
+top50_res_13_lfc_24 <- gene_id_name(res_13_lfc_24, id_name_table = TRUE)
+top50_res_13_lfc_24$Compound <- "13"
+top50_res_13_lfc_24$TimePoint <- 24
 
+top50_all <- rbind(top50_res_26_lfc,top50_res_13_lfc, top50_res_18_lfc,top50_res_26_lfc_24,top50_res_13_lfc_24)
+top50_all <- top50_all[!(is.na(top50_all$hgnc_symbol) | top50_all$hgnc_symbol==""), ]
 
-##
-# top 50 genes involved
-cbind(rownames(top50_res_26_lfc)[1:50], top50_res_26_lfc$gene_name[1:50])
-genes_6_top <- as.data.frame(cbind(rownames(top50_res_26_lfc)[1:50], top50_res_26_lfc$gene_name[1:50]))
-colnames(genes_6_top) <- c("ensembl_gene_id", "hgnc_symbol")
+# Write csv files for genes #
+# ------------------------- #
 
-##
+write.csv(top50_all, file = "top50lfc_difexpressed_all_samples.csv", row.names = FALSE)
+
+#############
+### Plots ###
+#############
 
 # Assorted mess #
 ## MA-plots ##
