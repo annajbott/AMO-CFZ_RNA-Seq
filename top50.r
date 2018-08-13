@@ -28,3 +28,6 @@ genes_together <- unique(rbind(dif_expressed_top_26_13,PC1_top_genes))
 which(PC1_top_genes$ensembl_gene_id %!in% dif_expressed_top_26_13$ensembl_gene_id)
 
 genes_together
+
+# Check for certain genes
+genes_dif_expressed_13 %>% filter(str_detect(hgnc_symbol, "ASNS"))

@@ -1,14 +1,17 @@
 library(DESeq2)
 library(biomaRt)
 
-results_process <- function(dds, contrast, alpha){
+results_process <- function(dds, contrast, alpha, significant_only = TRUE){
   result_noshrink <- results(dds, contrast = contrast, alpha = alpha)
   result_lfc <- lfcShrink(dds, contrast = contrast, res = result_noshrink)
   # keep only non NA adjusted p values and <0.05
+  if(significant_only == TRUE){
   result_lfc <- result_lfc[!is.na(result_lfc$padj) & result_lfc$padj<= alpha,]
   # All genes left now are 'statistically significant', so now order by biological significance 
   # Order by largest magnitude fold change
   result_lfc <- result_lfc[rev(order(abs(result_lfc$log2FoldChange))),]
+  }
+  final <- result_lfc
 }
 
 ## Function for hashing gene id to name
@@ -23,20 +26,26 @@ gene_id_name <- function(ordered_results, top = 50, id_name_table = FALSE){
     break
   }
   top_lfc$gene_name <- NA
+  top_lfc$log_fold_change <- 0
   top_lfc$OverExpressed <- NA
   for(i in 1:nrow(top_lfc)){
     gene_id <- rownames(top_lfc)[i]
     name <- filter(gene_keys, gene_keys$ensembl_gene_id == gene_id)[1,2]
-    top_lfc[i,ncol(top_lfc) -1] <- name
-    top_lfc[i,ncol(top_lfc)] <- ifelse(top_lfc[i,2] >= 1,  TRUE, FALSE)
+    top_lfc[i,ncol(top_lfc) -2] <- name
+    # If positive log fold change, overexpressed = true
+    top_lfc[i,ncol(top_lfc)] <- ifelse(top_lfc[i,2] >= 0,  TRUE, FALSE)
+    top_lfc[i,ncol(top_lfc) -1] <- top_lfc[i,2]
   }
   # Output includes log fold change and p values etc. table
-  final <- top_lfc[,-ncol(top_lfc)]
+  final <- top_lfc[,-c(ncol(top_lfc),ncol(top_lfc)-1)]
   # output is just gene id vs gene name for the top statistically significant, largest log fold change genes
   if(id_name_table == TRUE){
-    # top 50 genes involved
-    gene_top <- as.data.frame(cbind(rownames(top_lfc)[1:50], top_lfc$gene_name[1:50],top_lfc$OverExpressed[1:50]))
-    colnames(gene_top) <- c("ensembl_gene_id", "hgnc_symbol", "OverExpressed")
+    # top genes involved
+    gene_top <- as.data.frame(cbind(rownames(top_lfc)[1:top], top_lfc$gene_name[1:top], top_lfc$log_fold_change[1:top] , top_lfc$OverExpressed[1:top]))
+    colnames(gene_top) <- c("ensembl_gene_id", "hgnc_symbol", "log2FoldChange","OverExpressed")
+    gene_top <- gene_top[!(is.na(gene_top$hgnc_symbol) | gene_top$hgnc_symbol==""), ]
+    gene_top$log2FoldChange <- as.numeric(levels(gene_top$log2FoldChange))[gene_top$log2FoldChange]
+   # rownames(gene_top) <- NULL
     final <- gene_top
   }
   return(final)

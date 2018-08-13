@@ -3,8 +3,9 @@ library("DESeq2")
 library("RColorBrewer")
 library(pheatmap)
 library("IHW")
-library(biomaRt)
 source("fun.R")
+library(stringr)
+library(ggplot2)
 
 #####################
 ## DESeq2 Analysis ##
@@ -87,7 +88,18 @@ res_13_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "13", "DM
 res_18_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "18", "DMSO"), alpha = 0.05 )
 # NCP 22 and MAZ 18 compounds have no genes with a padj value <0.05, compared to DMSO. 
 
-# Add gene names to tables
+# All unique differentially expressed genes (padj <0.05) with accompanying gene hgnc symbols, for 6hr and 24 hr
+#26
+genes_dif_expressed_26_6 <- gene_id_name(res_26_lfc, id_name_table = TRUE, top = nrow(res_26_lfc))
+genes_dif_expressed_26_24 <- gene_id_name(res_26_lfc_24, id_name_table = TRUE, top = nrow(res_26_lfc_24))
+genes_dif_expressed_26 <- unique(rbind(genes_dif_expressed_26_6,genes_dif_expressed_26_24))
+# 13
+genes_dif_expressed_13_6 <- gene_id_name(res_13_lfc, id_name_table = TRUE, top = nrow(res_13_lfc))
+genes_dif_expressed_13_24 <- gene_id_name(res_13_lfc_24, id_name_table = TRUE, top = nrow(res_13_lfc_24))
+genes_dif_expressed_13 <- unique(rbind(genes_dif_expressed_13_6,genes_dif_expressed_13_24))
+
+
+# Top 50 genes (greatest magnitude fold change)
 top50_res_26_lfc <- gene_id_name(res_26_lfc, id_name_table = TRUE)
 top50_res_26_lfc$Compound <- "26"
 top50_res_26_lfc$TimePoint <- 6
@@ -206,3 +218,49 @@ pca_rot <- as.data.frame(pca$rotation[,1:2])
 #pca_PC2 <- pca_rot[rev(order(pca_rot$PC2)),] # Order by genes contributing most variation to PC2
 
 pca_24 <- plotPCA(rld24, intgroup=c("Compound"), returnData = TRUE)
+
+## Plots of AAR known genes ##
+samples_list <- list(genes_dif_expressed_13_6, genes_dif_expressed_13_24, genes_dif_expressed_26_6, genes_dif_expressed_26_24)
+gene_list <- c("EIF4EBP1", "ASNS", "GPT2", "DDIT3" , "ATF4", "SLC6A9")
+plot_table <- data.frame()
+
+plot_table[1:2,1] <- "13"
+plot_table[3:4,1] <- "26"
+plot_table[c(1,3),2] <- "6"
+plot_table[c(2,4),2] <- "24"
+rownames(plot_table) <- c("13_6", "13_24", "26_6", "26_24")
+colnames(plot_table) <- c("Compound", "TimePoint")
+
+for(i in seq_along(samples_list)){
+  for(j in seq_along(gene_list)){
+    subset_data <- samples_list[[i]] %>% filter(str_detect(hgnc_symbol, gene_list[j]))
+    plot_table[i,j + 2] <- subset_data[1,"log2FoldChange"]
+  }
+    
+}
+colnames(plot_table) <- c("Compound", "TimePoint",gene_list)
+plot_table$Compound <- as.factor(plot_table$Compound)
+plot_table$TimePoint <- as.factor(plot_table$TimePoint)
+
+plot_table_tidy <- gather(plot_table,"gene", "Log2FoldChange", -c(Compound, TimePoint))
+
+
+ggplot(data=plot_table_tidy, aes(x=gene, y=Log2FoldChange, fill = Compound)) +
+  geom_bar(stat = "summary", fun.y = "mean", position=position_dodge())
+
+
+## Plot of gene log fold change 6 hr vs 24 hr ##
+all_results_26_6 <- results_process(dds_deseq, contrast = c("Compound", "26", "DMSO"), alpha = 0.05, significant_only = FALSE)
+all_results_26_24 <- results_process(dds_deseq24, contrast = c("Compound", "26", "DMSO"), alpha = 0.05, significant_only = FALSE)
+all_results_13_6 <- results_process(dds_deseq, contrast = c("Compound", "13", "DMSO"), alpha = 0.05, significant_only = FALSE)
+all_results_13_24 <- results_process(dds_deseq24, contrast = c("Compound", "13", "DMSO"), alpha = 0.05, significant_only = FALSE)
+
+
+all(rownames(all_results_26_6) %in% rownames(all_results_26_24)) # True 
+all(rownames(all_results_26_6) == rownames(all_results_26_24)) # in the same order?
+time_vs_26 <- as.data.frame(cbind(all_results_26_6$log2FoldChange, all_results_26_24$log2FoldChange))
+rownames(time_vs_26) <- rownames(all_results_26_6)
+colnames(time_vs_26) <- c("log_fold_change_6hr", "log_fold_change_24hr")
+ggplot(time_vs_26, aes(x=log_fold_change_6hr, y=log_fold_change_24hr)) + geom_point()
+
+unique()
