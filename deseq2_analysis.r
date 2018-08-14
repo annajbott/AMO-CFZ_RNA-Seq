@@ -92,11 +92,11 @@ res_18_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "18", "DM
 #26
 genes_dif_expressed_26_6 <- gene_id_name(res_26_lfc, id_name_table = TRUE, top = nrow(res_26_lfc))
 genes_dif_expressed_26_24 <- gene_id_name(res_26_lfc_24, id_name_table = TRUE, top = nrow(res_26_lfc_24))
-genes_dif_expressed_26 <- unique(rbind(genes_dif_expressed_26_6,genes_dif_expressed_26_24))
+genes_dif_expressed_26 <- unique(rbind(genes_dif_expressed_26_6[,c(1,2,4)],genes_dif_expressed_26_24[,c(1,2,4)]))
 # 13
 genes_dif_expressed_13_6 <- gene_id_name(res_13_lfc, id_name_table = TRUE, top = nrow(res_13_lfc))
 genes_dif_expressed_13_24 <- gene_id_name(res_13_lfc_24, id_name_table = TRUE, top = nrow(res_13_lfc_24))
-genes_dif_expressed_13 <- unique(rbind(genes_dif_expressed_13_6,genes_dif_expressed_13_24))
+genes_dif_expressed_13 <- unique(rbind(genes_dif_expressed_13_6[,c(1,2,4)],genes_dif_expressed_13_24[,c(1,2,4)]))
 
 
 # Top 50 genes (greatest magnitude fold change)
@@ -255,12 +255,45 @@ all_results_26_24 <- results_process(dds_deseq24, contrast = c("Compound", "26",
 all_results_13_6 <- results_process(dds_deseq, contrast = c("Compound", "13", "DMSO"), alpha = 0.05, significant_only = FALSE)
 all_results_13_24 <- results_process(dds_deseq24, contrast = c("Compound", "13", "DMSO"), alpha = 0.05, significant_only = FALSE)
 
+# Get rid of NAs and blank p values. Make match
+#26
+all_results_26_6 <- all_results_26_6[!(is.na(all_results_26_6$padj) | all_results_26_6$padj==""), ]
+all_results_26_24 <- all_results_26_24[!(is.na(all_results_26_24$padj) | all_results_26_24$padj==""), ]
+#13
+all_results_13_6 <- all_results_13_6[!(is.na(all_results_13_6$padj) | all_results_13_6$padj==""), ]
+all_results_13_24 <- all_results_13_24[!(is.na(all_results_13_24$padj) | all_results_13_24$padj==""), ]
 
-all(rownames(all_results_26_6) %in% rownames(all_results_26_24)) # True 
-all(rownames(all_results_26_6) == rownames(all_results_26_24)) # in the same order?
-time_vs_26 <- as.data.frame(cbind(all_results_26_6$log2FoldChange, all_results_26_24$log2FoldChange))
-rownames(time_vs_26) <- rownames(all_results_26_6)
+# 26 keep
+kept <- all_results_26_6[rownames(all_results_26_6) %in% rownames(all_results_26_24),]
+all(rownames(all_results_26_24) %in% rownames(kept))
+kept2 <- all_results_26_24[rownames(all_results_26_24) %in% rownames(kept),]
+# check in the right order
+all(rownames(kept) == rownames(kept2)) # Right order
+
+# 13 keep
+kept_13 <- all_results_13_6[rownames(all_results_13_6) %in% rownames(all_results_13_24),]
+all(rownames(all_results_13_24) %in% rownames(kept))
+kept2_13 <- all_results_13_24[rownames(all_results_13_24) %in% rownames(kept_13),]
+# check in the right order
+all(rownames(kept_13) == rownames(kept2_13)) # Right order
+
+# 26 data frame and plot
+time_vs_26 <- as.data.frame(cbind(kept$log2FoldChange, kept2$log2FoldChange))
+rownames(time_vs_26) <- rownames(kept)
 colnames(time_vs_26) <- c("log_fold_change_6hr", "log_fold_change_24hr")
-ggplot(time_vs_26, aes(x=log_fold_change_6hr, y=log_fold_change_24hr)) + geom_point()
+ggplot(time_vs_26, aes(x=log_fold_change_6hr, y=log_fold_change_24hr)) + geom_point() 
+ labs(x = "Log 2 Fold Change (NCP 26 vs DMSO)- 6hr", y =  "Log 2 Fold Change (NCP 26 vs DMSO)- 24hr" ) +
+  geom_abline(intercept = 0, slope = 1) +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0)
 
-unique()
+# 13 data frame and plot
+time_vs_13 <- as.data.frame(cbind(kept_13$log2FoldChange, kept2_13$log2FoldChange))
+rownames(time_vs_13) <- rownames(kept_13)
+colnames(time_vs_13) <- c("log_fold_change_6hr", "log_fold_change_24hr")
+ggplot(time_vs_13, aes(x=log_fold_change_6hr, y=log_fold_change_24hr)) + 
+  geom_point() + 
+  labs(x = "Log 2 Fold Change (MAZ 13 vs DMSO)- 6hr", y =  "Log 2 Fold Change (MAZ 13 vs DMSO)- 24hr" ) +
+  geom_abline(intercept = 0, slope = 1) +
+  geom_hline(yintercept = 0) +
+  geom_vline(xintercept = 0)
