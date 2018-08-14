@@ -219,7 +219,10 @@ pca_rot <- as.data.frame(pca$rotation[,1:2])
 
 pca_24 <- plotPCA(rld24, intgroup=c("Compound"), returnData = TRUE)
 
+
 ## Plots of AAR known genes ##
+## ------------------------ ##
+
 samples_list <- list(genes_dif_expressed_13_6, genes_dif_expressed_13_24, genes_dif_expressed_26_6, genes_dif_expressed_26_24)
 gene_list <- c("EIF4EBP1", "ASNS", "GPT2", "DDIT3" , "ATF4", "SLC6A9")
 plot_table <- data.frame()
@@ -248,6 +251,8 @@ plot_table_tidy <- gather(plot_table,"gene", "Log2FoldChange", -c(Compound, Time
 ggplot(data=plot_table_tidy, aes(x=gene, y=Log2FoldChange, fill = Compound)) +
   geom_bar(stat = "summary", fun.y = "mean", position=position_dodge())
 
+## 6hr vs 24 hr plots ##
+## ------------------ ##
 
 ## Plot of gene log fold change 6 hr vs 24 hr ##
 all_results_26_6 <- results_process(dds_deseq, contrast = c("Compound", "26", "DMSO"), alpha = 0.05, significant_only = FALSE)
@@ -281,8 +286,10 @@ all(rownames(kept_13) == rownames(kept2_13)) # Right order
 time_vs_26 <- as.data.frame(cbind(kept$log2FoldChange, kept2$log2FoldChange))
 rownames(time_vs_26) <- rownames(kept)
 colnames(time_vs_26) <- c("log_fold_change_6hr", "log_fold_change_24hr")
-ggplot(time_vs_26, aes(x=log_fold_change_6hr, y=log_fold_change_24hr)) + geom_point() 
+time_vs_26$threshold_status <- ifelse(time_vs_26$log_fold_change_6hr > 1 & time_vs_26$log_fold_change_24hr > 1, TRUE, FALSE )
+ggplot(time_vs_26, aes(x=log_fold_change_6hr, y=log_fold_change_24hr, color = threshold_status)) + geom_point() +
  labs(x = "Log 2 Fold Change (NCP 26 vs DMSO)- 6hr", y =  "Log 2 Fold Change (NCP 26 vs DMSO)- 24hr" ) +
+  scale_colour_manual(values = c("Black", "Red")) +
   geom_abline(intercept = 0, slope = 1) +
   geom_hline(yintercept = 0) +
   geom_vline(xintercept = 0)
@@ -291,9 +298,12 @@ ggplot(time_vs_26, aes(x=log_fold_change_6hr, y=log_fold_change_24hr)) + geom_po
 time_vs_13 <- as.data.frame(cbind(kept_13$log2FoldChange, kept2_13$log2FoldChange))
 rownames(time_vs_13) <- rownames(kept_13)
 colnames(time_vs_13) <- c("log_fold_change_6hr", "log_fold_change_24hr")
-ggplot(time_vs_13, aes(x=log_fold_change_6hr, y=log_fold_change_24hr)) + 
+# New column indicating if gene expression has doubled for both 6hr and 24 hr, can then colour graph using this variable
+time_vs_13$threshold_status <- ifelse(time_vs_13$log_fold_change_6hr > 1 & time_vs_13$log_fold_change_24hr > 1, TRUE, FALSE )
+ggplot(time_vs_13, aes(x=log_fold_change_6hr, y=log_fold_change_24hr, color = threshold_status)) + 
   geom_point() + 
   labs(x = "Log 2 Fold Change (MAZ 13 vs DMSO)- 6hr", y =  "Log 2 Fold Change (MAZ 13 vs DMSO)- 24hr" ) +
+  scale_colour_manual(values = c("Black", "Red")) +
   geom_abline(intercept = 0, slope = 1) +
   geom_hline(yintercept = 0) +
   geom_vline(xintercept = 0)
