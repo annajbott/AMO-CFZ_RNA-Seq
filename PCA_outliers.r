@@ -5,6 +5,10 @@ library(pheatmap)
 library("IHW")
 library(biomaRt)
 source("fun.R")
+library(gage)
+library(gageData)
+library(pathview)
+library(org.Hs.eg.db)
 
 ##################################
 ## Principal Component Analyses ##
@@ -123,10 +127,10 @@ write.csv(genes_data, file = "top50_PC1.csv", row.names = FALSE)
 ## Differential expression analysis without outliers ##
 ## ------------------------------------------------- ##
 
-res_26_lfc <- results_process(dds_deseq, contrast = c("Compound", "26", "DMSO"), alpha = 0.05, significant_only = TRUE, foldchange_threshold = TRUE )
-res_22_lfc <- results_process(dds_deseq, contrast = c("Compound", "22", "DMSO"), alpha = 0.05, significant_only = TRUE, foldchange_threshold = TRUE )
-res_13_lfc <- results_process(dds_deseq, contrast = c("Compound", "13", "DMSO"), alpha = 0.05, significant_only = TRUE, foldchange_threshold = TRUE )
-res_18_lfc <- results_process(dds_deseq, contrast = c("Compound", "18", "DMSO"), alpha = 0.05, significant_only = TRUE, foldchange_threshold = TRUE )
+res_26_lfc <- results_process(dds_deseq, contrast = c("Compound", "26", "DMSO"), alpha = 0.05, significant_only = TRUE, foldchange_threshold = FALSE )
+res_22_lfc <- results_process(dds_deseq, contrast = c("Compound", "22", "DMSO"), alpha = 0.05, significant_only = TRUE, foldchange_threshold = FALSE )
+res_13_lfc <- results_process(dds_deseq, contrast = c("Compound", "13", "DMSO"), alpha = 0.05, significant_only = TRUE, foldchange_threshold = FALSE )
+res_18_lfc <- results_process(dds_deseq, contrast = c("Compound", "18", "DMSO"), alpha = 0.05, significant_only = TRUE, foldchange_threshold = FALSE )
 
 # Taken out a replicate so padj values are using sd with only two replicates, instead set threshold as 1 log2 fold change (double expression)
 res_26_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "26", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = TRUE)
@@ -134,9 +138,23 @@ res_22_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "22", "DM
 res_13_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "13", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = TRUE )
 res_18_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "18", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = TRUE )
 
-#6
-NCP26_6hr_genes <- gene_id_name(res_26_lfc, top = nrow(res_26_lfc), id_name_table = TRUE)
-MAZ13_6hr_genes <- gene_id_name(res_13_lfc, top = nrow(res_13_lfc), id_name_table = TRUE)
-#24
-NCP26_24hr_genes <- gene_id_name(res_26_lfc_24, top = nrow(res_26_lfc_24), id_name_table = TRUE)
-MAZ13_24hr_genes <- gene_id_name(res_13_lfc_24, top = nrow(res_13_lfc_24), id_name_table = TRUE)
+######################
+## Pathway Analysis ##
+######################
+
+# Might be needed later???
+out.suffix <- "deseq2"
+
+## Using GATE and KEGG ##
+## ------------------- ##
+
+# Getting latest human KEGG pathway
+kg.hsa <- kegg.gsets(species = "hsa", id.type = "kegg", check.new=FALSE)
+kegg.sigmet <- kg.hsa$kg.sets[kg.hsa$sigmet.idx]
+
+kegg_26_6 <-  kegg_ouput(res_26_lfc, gset = kegg.sigmet)
+kegg_26_24 <- kegg_ouput(res_26_lfc_24, gset = kegg.sigmet)
+kegg_13_6 <-  kegg_ouput(res_13_lfc, gset = kegg.sigmet)
+kegg_13_24 <- kegg_ouput(res_13_lfc_24, gset = kegg.sigmet)
+# Test
+lapply(kegg_13_24, head)
