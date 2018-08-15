@@ -21,16 +21,17 @@ coldata <- read.csv("coldata.csv", row.names = 1)
 # From PCA plots and data from 'returnData' pca option
 # outlier 6hr: CFZ-22-t6-r3
 # outlier 24hr: CFZ-DMSO-t24-r2, CFZ-18-t24-r3, ?CFZ-26-t24-r1?
-outlier_row_column_list <- c(which(rownames(coldata) == "CFZ-18-t24-r3"),which(rownames(coldata) == "CFZ-DMSO-t24-r2"),which(rownames(coldata) == "CFZ-22-t6-r3"))
+outlier_row_column_list <- c(which(rownames(coldata) == "CFZ-18-t24-r3"),which(rownames(coldata) == "CFZ-DMSO-t24-r2"))
 CFZ_genes <- CFZ_genes[, -outlier_row_column_list]
 coldata <- coldata[-outlier_row_column_list,]
 
 # individual time point, subset of above data
 
-CFZ_6hr <- CFZ_genes[,1:14]
-coldata_6 <- coldata[1:14,]
-CFZ_24hr <- CFZ_genes[,15:27]
-coldata_24 <- coldata[15:27,]
+CFZ_6hr <- CFZ_genes[,1:15]
+# NCP 22 r3 isn't really an outlier, onlyon PC2, which accounts for 8% variance
+coldata_6 <- coldata[1:15,]
+CFZ_24hr <- CFZ_genes[,16:28]
+coldata_24 <- coldata[16:28,]
 
 ## Using DESeq2 Package ##
 ## -------------------- ##
@@ -119,8 +120,23 @@ genes_data <- gene_id_name_raw(string_genes)
 ## ----------------------------------------------------- ##
 write.csv(genes_data, file = "top50_PC1.csv", row.names = FALSE)
 
-## Explore outliers ##
-## ---------------- ##
+## Differential expression analysis without outliers ##
+## ------------------------------------------------- ##
 
-# Look at variation along specific axis for outliers, see if genes contributing are involved in specific pathway, e.g. inflammatory
-# Later...
+res_26_lfc <- results_process(dds_deseq, contrast = c("Compound", "26", "DMSO"), alpha = 0.05, significant_only = TRUE, foldchange_threshold = TRUE )
+res_22_lfc <- results_process(dds_deseq, contrast = c("Compound", "22", "DMSO"), alpha = 0.05, significant_only = TRUE, foldchange_threshold = TRUE )
+res_13_lfc <- results_process(dds_deseq, contrast = c("Compound", "13", "DMSO"), alpha = 0.05, significant_only = TRUE, foldchange_threshold = TRUE )
+res_18_lfc <- results_process(dds_deseq, contrast = c("Compound", "18", "DMSO"), alpha = 0.05, significant_only = TRUE, foldchange_threshold = TRUE )
+
+# Taken out a replicate so padj values are using sd with only two replicates, instead set threshold as 1 log2 fold change (double expression)
+res_26_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "26", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = TRUE)
+res_22_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "22", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = TRUE )
+res_13_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "13", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = TRUE )
+res_18_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "18", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = TRUE )
+
+#6
+NCP26_6hr_genes <- gene_id_name(res_26_lfc, top = nrow(res_26_lfc), id_name_table = TRUE)
+MAZ13_6hr_genes <- gene_id_name(res_13_lfc, top = nrow(res_13_lfc), id_name_table = TRUE)
+#24
+NCP26_24hr_genes <- gene_id_name(res_26_lfc_24, top = nrow(res_26_lfc_24), id_name_table = TRUE)
+MAZ13_24hr_genes <- gene_id_name(res_13_lfc_24, top = nrow(res_13_lfc_24), id_name_table = TRUE)
