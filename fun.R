@@ -1,5 +1,8 @@
 library(DESeq2)
 library(biomaRt)
+library(AnnotationDbi)
+library(org.Hs.eg.db)
+library(gage)
 
 results_process <- function(dds, contrast, alpha, significant_only = TRUE, foldchange_threshold = FALSE){
   result_noshrink <- results(dds, contrast = contrast, alpha = alpha)
@@ -70,3 +73,24 @@ gene_id_name_raw <- function(string_vector){
 
 
 '%!in%' <- function(x,y)!('%in%'(x,y))
+
+convertIDs <- function( ids, from, to, db, ifMultiple=c("putNA", "useFirst")) {
+  stopifnot( inherits( db, "AnnotationDb" ) )
+  ifMultiple <- match.arg( ifMultiple )
+  suppressWarnings( selRes <- AnnotationDbi::select(
+    db, keys=ids, keytype=from, columns=c(from,to) ) )
+  if ( ifMultiple == "putNA" ) {
+    duplicatedIds <- selRes[ duplicated( selRes[,1] ), 1 ]
+    selRes <- selRes[ ! selRes[,1] %in% duplicatedIds, ]
+  }
+  return( selRes[ match( ids, selRes[,1] ), 2 ] )
+}
+
+kegg_ouput <- function(result_lfc, gset, same_dir = TRUE){
+  result_lfc$gene_name <- convertIDs(row.names(result_lfc), "ENSEMBL", "SYMBOL", org.Hs.eg.db)
+  result_lfc$entrez_id <- convertIDs(row.names(result_lfc), "ENSEMBL", "ENTREZID", org.Hs.eg.db)
+  result_lfc <- result_lfc[!is.na(result_lfc$entrez_id) == TRUE,]
+  foldchanges <- result_lfc$log2FoldChange
+  names(foldchanges) <- result_lfc$entrez_id
+  keggres <- gage(foldchanges, gsets = gset, ref = NULL, samp = NULL, same.dir = same_dir)
+}
