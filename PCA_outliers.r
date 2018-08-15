@@ -157,4 +157,5 @@ kegg_26_24 <- kegg_ouput(res_26_lfc_24, gset = kegg.sigmet)
 kegg_13_6 <-  kegg_ouput(res_13_lfc, gset = kegg.sigmet)
 kegg_13_24 <- kegg_ouput(res_13_lfc_24, gset = kegg.sigmet)
 # Test
-lapply(kegg_13_24, head)
+lapply(kegg_26_24, head)
+
