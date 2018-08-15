@@ -159,33 +159,19 @@ rld24 <- rlog(dds_deseq24, blind=FALSE)
 plotPCA(rld, intgroup="Compound")
 plotPCA(rld24, intgroup="Compound")
 
-# test for getting PCA data
-rv <- rowVars(assay(rld))
+# 2 outliers from 24 hour PCA, 1 DMSO and 1 MAZ 18. Affects PC1
+rv <- rowVars(assay(rld24))
 select_rv <- order(rv, decreasing = TRUE)[seq_len(min(500, 
                                                       length(rv)))]
-pca <- prcomp(t(assay(rld)[select_rv, ]))
+pca <- prcomp(t(assay(rld24)[select_rv, ]))
 
 pca_rot <- as.data.frame(pca$rotation[,1:2])
-pca_PC2 <- pca_rot[rev(order(pca_rot$PC2)),] # Order by genes contributing most variation to PC2
+PC1 <- pca_rot[rev(order(pca_rot$PC1)),][1:30,] # Order by genes contributing most variation to PC1
+PC1 <- cbind(gene_id_name_raw(rownames(PC1)),PC1)[,1:3]
 
-pca_6 <- plotPCA(rld, intgroup=c("Compound"), returnData = TRUE)
-# CFZ-22-t6-r3 seems to be an outlier
 
-######## Investigate PCA outlier ######## 
+# Heat map, sample distances #
 
-genes_22 <- select(CFZ_6hr, contains("-22-"))
-keep <- rowSums(genes_22) >= 20
-genes_22 <- genes_22[keep,]
-genes_22 <- filter(genes_22, !is.na(genes_22))
-
-pca_PC2_large <- pca_PC2[1:50,]
-genes_22_pc2 <- genes_22[row.names(pca_PC2_large),]
-
-genes_22_pc2 <- transform(genes_22_pc2, percent= abs(`CFZ-22-t6-r3` - mean(c(`CFZ-22-t6-r1`, `CFZ-22-t6-r2`)))/mean(c(`CFZ-22-t6-r1`, `CFZ-22-t6-r2`)), check.names = FALSE)
-genes_22_pc2
-
-########
-# Heat map, explore clusters
 sampleDists <- dist(t(assay(rld)))
 sampleDistMatrix <- as.matrix(sampleDists)
 rownames(sampleDistMatrix) <- rld$Compound
@@ -207,19 +193,6 @@ pheatmap(sampleDistMatrix,
          clustering_distance_cols=sampleDists,
          col=colors)
 
-
-
-rv <- rowVars(assay(rld24))
-select_rv <- order(rv, decreasing = TRUE)[seq_len(min(500, 
-                                                      length(rv)))]
-pca <- prcomp(t(assay(rld24)[select_rv, ]))
-
-pca_rot <- as.data.frame(pca$rotation[,1:2])
-#pca_PC2 <- pca_rot[rev(order(pca_rot$PC2)),] # Order by genes contributing most variation to PC2
-
-pca_24 <- plotPCA(rld24, intgroup=c("Compound"), returnData = TRUE)
-
-
 ## Plots of AAR known genes ##
 ## ------------------------ ##
 
@@ -239,14 +212,12 @@ for(i in seq_along(samples_list)){
     subset_data <- samples_list[[i]] %>% filter(str_detect(hgnc_symbol, gene_list[j]))
     plot_table[i,j + 2] <- subset_data[1,"log2FoldChange"]
   }
-    
 }
 colnames(plot_table) <- c("Compound", "TimePoint",gene_list)
 plot_table$Compound <- as.factor(plot_table$Compound)
 plot_table$TimePoint <- as.factor(plot_table$TimePoint)
 
 plot_table_tidy <- gather(plot_table,"gene", "Log2FoldChange", -c(Compound, TimePoint))
-
 
 ggplot(data=plot_table_tidy, aes(x=gene, y=Log2FoldChange, fill = Compound)) +
   geom_bar(stat = "summary", fun.y = "mean", position=position_dodge())
