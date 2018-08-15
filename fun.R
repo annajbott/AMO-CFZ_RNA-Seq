@@ -1,7 +1,7 @@
 library(DESeq2)
 library(biomaRt)
 
-results_process <- function(dds, contrast, alpha, significant_only = TRUE){
+results_process <- function(dds, contrast, alpha, significant_only = TRUE, foldchange_threshold = FALSE){
   result_noshrink <- results(dds, contrast = contrast, alpha = alpha)
   result_lfc <- lfcShrink(dds, contrast = contrast, res = result_noshrink)
   # keep only non NA adjusted p values and <0.05
@@ -10,6 +10,10 @@ results_process <- function(dds, contrast, alpha, significant_only = TRUE){
   # All genes left now are 'statistically significant', so now order by biological significance 
   # Order by largest magnitude fold change
   result_lfc <- result_lfc[rev(order(abs(result_lfc$log2FoldChange))),]
+  }
+  if(foldchange_threshold == TRUE){
+    result_lfc <- result_lfc[abs(result_lfc$log2FoldChange) >= 1,]
+    result_lfc <- result_lfc[rev(order(abs(result_lfc$log2FoldChange))),]
   }
   final <- result_lfc
 }
