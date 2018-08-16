@@ -10,6 +10,7 @@ library(gageData)
 library(pathview)
 library(org.Hs.eg.db)
 
+
 ##################################
 ## Principal Component Analyses ##
 ##################################
@@ -133,10 +134,10 @@ res_13_lfc <- results_process(dds_deseq, contrast = c("Compound", "13", "DMSO"),
 res_18_lfc <- results_process(dds_deseq, contrast = c("Compound", "18", "DMSO"), alpha = 0.05, significant_only = TRUE, foldchange_threshold = FALSE )
 
 # Taken out a replicate so padj values are using sd with only two replicates, instead set threshold as 1 log2 fold change (double expression)
-res_26_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "26", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = TRUE)
-res_22_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "22", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = TRUE )
-res_13_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "13", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = TRUE )
-res_18_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "18", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = TRUE )
+res_26_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "26", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = 0.75)
+res_22_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "22", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = 0.75 )
+res_13_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "13", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = 0.75 )
+res_18_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "18", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = 0.75 )
 
 ######################
 ## Pathway Analysis ##
@@ -152,10 +153,38 @@ out.suffix <- "deseq2"
 kg.hsa <- kegg.gsets(species = "hsa", id.type = "kegg", check.new=FALSE)
 kegg.sigmet <- kg.hsa$kg.sets[kg.hsa$sigmet.idx]
 
-kegg_26_6 <-  kegg_ouput(res_26_lfc, gset = kegg.sigmet)
-kegg_26_24 <- kegg_ouput(res_26_lfc_24, gset = kegg.sigmet)
-kegg_13_6 <-  kegg_ouput(res_13_lfc, gset = kegg.sigmet)
-kegg_13_24 <- kegg_ouput(res_13_lfc_24, gset = kegg.sigmet)
+# List of results, followed by fold change data frame
+kegg_26_6 <-  kegg_ouput(res_26_lfc, gset = kegg.sigmet, same_dir = TRUE)
+kegg_26_24 <- kegg_ouput(res_26_lfc_24, gset = kegg.sigmet, same_dir = TRUE)
+kegg_13_6 <-  kegg_ouput(res_13_lfc, gset = kegg.sigmet, same_dir = TRUE)
+kegg_13_24 <- kegg_ouput(res_13_lfc_24, gset = kegg.sigmet, same_dir = TRUE)
 # Test
-lapply(kegg_26_24, head)
+lapply(kegg_13_24[[1]], head)
 
+# Get the pathways
+kegg_pathways_26_6 = data.frame(id=rownames(kegg_26_6[[1]]$greater), kegg_26_6[[1]]$less) %>% 
+  tbl_df() %>% 
+  filter(row_number()<=3) %>% 
+  .$id %>% 
+  as.character()
+# Get the IDs.
+kegg_ids_26_6 = substr(kegg_pathways_26_6, start=1, stop=8)
+# 13_6 dpwn_regulated
+kegg_pathways_13_24 = data.frame(id=rownames(kegg_13_24[[1]]$less), kegg_13_24[[1]]$less) %>% 
+  tbl_df() %>% 
+  filter(row_number()<=1) %>% 
+  .$id %>% 
+  as.character()
+# Get the IDs.
+kegg_ids_13_24 = substr(kegg_pathways_13_24, start=1, stop=8)
+
+# Define plotting function for applying later
+plot_pathway = function(pid) pathview(gene.data=foldchanges, pathway.id=pid, species="hsa", new.signature=FALSE)
+
+# plot multiple pathways (plots saved to disk and returns a throwaway list object)
+tmp = sapply(kegg_ids_13_24, function(pid) pathview(gene.data=kegg_13_24[[2]], pathway.id=pid, species="hsa", out.suffix=out.suffix))
+
+pv.out.list <- sapply(kegg_ids_26_6, function(pid) pathview(gene.data =  kegg_26_6[[2]], pathway.id = pid,species = "hsa", out.suffix=out.suffix))
+
+
+pv.out.list <- sapply(kegg_ids_13_6, function(pid) pathview(gene.data =  kegg_13_6[[2]], pathway.id = pid,species = "hsa", out.suffix=out.suffix))
