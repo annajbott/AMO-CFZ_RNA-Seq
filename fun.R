@@ -14,8 +14,8 @@ results_process <- function(dds, contrast, alpha, significant_only = TRUE, foldc
   # Order by largest magnitude fold change
   result_lfc <- result_lfc[rev(order(abs(result_lfc$log2FoldChange))),]
   }
-  if(foldchange_threshold == TRUE){
-    result_lfc <- result_lfc[abs(result_lfc$log2FoldChange) >= 1,]
+  if(foldchange_threshold != FALSE){
+    result_lfc <- result_lfc[abs(result_lfc$log2FoldChange) >= foldchange_threshold,]
     result_lfc <- result_lfc[rev(order(abs(result_lfc$log2FoldChange))),]
   }
   final <- result_lfc
@@ -93,4 +93,6 @@ kegg_ouput <- function(result_lfc, gset, same_dir = TRUE){
   foldchanges <- result_lfc$log2FoldChange
   names(foldchanges) <- result_lfc$entrez_id
   keggres <- gage(foldchanges, gsets = gset, ref = NULL, samp = NULL, same.dir = same_dir)
+  list_result_fold <- list(keggres, foldchanges)
+  return(list_result_fold)
 }
