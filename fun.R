@@ -3,6 +3,7 @@ library(biomaRt)
 library(AnnotationDbi)
 library(org.Hs.eg.db)
 library(gage)
+library(gageData)
 
 results_process <- function(dds, contrast, alpha, significant_only = TRUE, foldchange_threshold = FALSE){
   result_noshrink <- results(dds, contrast = contrast, alpha = alpha)
@@ -86,13 +87,47 @@ convertIDs <- function( ids, from, to, db, ifMultiple=c("putNA", "useFirst")) {
   return( selRes[ match( ids, selRes[,1] ), 2 ] )
 }
 
-kegg_ouput <- function(result_lfc, gset, same_dir = TRUE){
+res_ouput <- function(result_lfc, gset, same_dir = TRUE, kegg_output = TRUE){
+  result_lfc$gene_name <- convertIDs(row.names(result_lfc), "ENSEMBL", "SYMBOL", org.Hs.eg.db)
+  result_lfc$entrez_id <- convertIDs(row.names(result_lfc), "ENSEMBL", "ENTREZID", org.Hs.eg.db)
+  result_lfc <- result_lfc[!is.na(result_lfc$entrez_id) == TRUE,]
+  if( kegg_output != TRUE){
+    final <- as.data.frame(result_lfc[,c("gene_name", "entrez_id", "log2FoldChange")])
+  }
+  else{
+  foldchanges <- result_lfc$log2FoldChange
+  names(foldchanges) <- result_lfc$entrez_id
+  keggres <- gage(foldchanges, gsets = gset, ref = NULL, samp = NULL, same.dir = same_dir)
+  final <- list(keggres, foldchanges)
+  }
+  
+  return(final)
+}
+dds_get <- function(gene_data, coldata, prefilter = 10, reference = "DMSO"){
+  dds <-  DESeqDataSetFromMatrix(countData = gene_data,
+                                 colData = coldata,
+                                 design = ~ Compound)
+  # Prefiltering, removing rows with sum of counts under 10 #
+  keep <- rowSums(counts(dds)) >= prefilter
+  dds <- dds[keep,]
+  dds$Compound <- relevel(dds$Compound, ref = reference)
+  
+  dds_deseq <- DESeq(dds)
+  return(dds_deseq)
+}
+pathway_full <- function(dds, contrast, gset, same_direction = TRUE, alpha = 0.05){
+  # Getting latest human KEGG pathway
+  result_noshrink <- results(dds, contrast = contrast, alpha = alpha)
+  result_lfc <- lfcShrink(dds, contrast = contrast, res = result_noshrink)
+
   result_lfc$gene_name <- convertIDs(row.names(result_lfc), "ENSEMBL", "SYMBOL", org.Hs.eg.db)
   result_lfc$entrez_id <- convertIDs(row.names(result_lfc), "ENSEMBL", "ENTREZID", org.Hs.eg.db)
   result_lfc <- result_lfc[!is.na(result_lfc$entrez_id) == TRUE,]
   foldchanges <- result_lfc$log2FoldChange
   names(foldchanges) <- result_lfc$entrez_id
-  keggres <- gage(foldchanges, gsets = gset, ref = NULL, samp = NULL, same.dir = same_dir)
-  list_result_fold <- list(keggres, foldchanges)
-  return(list_result_fold)
+  keggres <- gage(foldchanges, gsets = gset, ref = NULL, samp = NULL, same.dir = same_direction)
+  final <- list(keggres, foldchanges)
+  
+  return(final)
+  
 }
