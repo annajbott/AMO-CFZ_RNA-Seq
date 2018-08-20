@@ -51,6 +51,17 @@ rld <- rlog(dds_deseq, blind=FALSE)
 # 24 hr 
 rld24 <- rlog(dds_deseq24, blind=FALSE) 
 
+## Sample distances- heat map ##
+## -------------------------- ##
+sampleDists <- dist(t(assay(rld24)))
+sampleDistMatrix <- as.matrix(sampleDists)
+rownames(sampleDistMatrix) <- rld24$Compound
+colnames(sampleDistMatrix) <- NULL
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows=sampleDists,
+         clustering_distance_cols=sampleDists,
+         col=colors)
 
 ## Clustering ##
 ## ---------- ##
@@ -140,41 +151,29 @@ fc_kegg_26 <- cbind(fc_kegg_26) # From biostar forum
 essData <- essGene(gs, fc_kegg_26, ref =NULL, samp =NULL)
 convertIDs(rownames(as.data.frame(essData)),"ENTREZID","SYMBOL", org.Hs.eg.db)
 
-# this is for heat map probably won't work with deseq2 format
-head(essData, 4)
-ref1=1:6
-samp1=7:12
-#generated text file for data table, pdf files for heatmap and scatterplot
-for (gs in rownames(gse16873.kegg.p$greater)[1:3]) {
-  outname = gsub(" |:|/", "_", substr(gs, 10, 100))
-  geneData(genes = kegg.gs[[gs]], exprs = essData, ref = ref1,
-           samp = samp1, outname = outname, txt = TRUE, heatmap = TRUE,
-           Colv = FALSE, Rowv = FALSE, dendrogram = "none", limit = 3, scatterplot = TRUE)
-}
+# Gene Ontology #
+data(go.sets.hs)
+data(go.subs.hs)
+gobpsets = go.sets.hs[go.subs.hs$BP]
+kegg_26_6_go <- pathway_full(dds = dds_deseq, contrast = c("Compound", "26", "DMSO"), gset = gobpsets,  same_direction = TRUE)
+
+lapply(kegg_26_6_go[[1]], head)
 
 
+## XGR ##
+library("XGR")
+ontology <- "MsigdbC2KEGG"
+# Use XGR and deseq2 results for differentially expressed genes in xEnricherGenes function to find key pathways affected
 
-## Pathview crap
-# Get the pathways
-kegg_pathways_26_6 = data.frame(id=rownames(kegg_26_6[[1]]$greater), kegg_26_6[[1]]$less) %>% 
-  tbl_df() %>% 
-  filter(row_number()<=3) %>% 
-  .$id %>% 
-  as.character()
-# Get the IDs.
-kegg_ids_26_6 = substr(kegg_pathways_26_6, start=1, stop=8)
-# 13_6 dpwn_regulated
-kegg_pathways_13_24 = data.frame(id=rownames(kegg_13_24[[1]]$less), kegg_13_24[[1]]$less) %>% 
-  tbl_df() %>% 
-  filter(row_number()<=1) %>% 
-  .$id %>% 
-  as.character()
-# Get the IDs.
-kegg_ids_13_24 = substr(kegg_pathways_13_24, start=1, stop=8)
 
-# Define plotting function for applying later
-plot_pathway = function(pid) pathview(gene.data=foldchanges, pathway.id=pid, species="hsa", new.signature=FALSE)
+eTerm_26_6 <- enricher_analysis(dds_deseq, c("Compound", "26", "DMSO"), ontology = ontology, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200)
+eTerm_13_6 <- enricher_analysis(dds_deseq, c("Compound", "13", "DMSO"), ontology = ontology, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200)
 
-# plot multiple pathways (plots saved to disk and returns a throwaway list object)
-tmp = sapply(kegg_ids_13_24, function(pid) pathview(gene.data=kegg_13_24[[2]], pathway.id=pid, species="hsa", out.suffix=out.suffix))
+# Use log fold change threshold rather than q values, as only 2 replicates for DMSO, so SE is not very useful
+eTerm_26_24 <- enricher_analysis(dds_deseq24, c("Compound", "26", "DMSO"), ontology = ontology, alpha = 0.05, foldchange_threshold = 1, number_top_genes = 200)
+eTerm_13_24 <- enricher_analysis(dds_deseq24, c("Compound", "13", "DMSO"), ontology = ontology, alpha = 0.05, foldchange_threshold = 1, number_top_genes = 200)
 
+
+xEnrichViewer(eTerm_26_6)
+bp <- xEnrichBarplot(eTerm_26_24, top_num="auto", displayBy="adjp")
+print(bp)
