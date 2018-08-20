@@ -4,6 +4,7 @@ library(AnnotationDbi)
 library(org.Hs.eg.db)
 library(gage)
 library(gageData)
+library("XGR")
 
 results_process <- function(dds, contrast, alpha, significant_only = TRUE, foldchange_threshold = FALSE){
   result_noshrink <- results(dds, contrast = contrast, alpha = alpha)
@@ -129,5 +130,24 @@ pathway_full <- function(dds, contrast, gset, same_direction = TRUE, alpha = 0.0
   final <- list(keggres, foldchanges)
   
   return(final)
+}
+# For XGR pathway analysis
+enricher_analysis <- function(dds, contrast, ontology, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200){
+  result_noshrink <- results(dds, contrast = contrast, alpha = alpha)
+  result_lfc <- lfcShrink(dds, contrast = contrast, res = result_noshrink)
+  background_symbols <- convertIDs(rownames(result_lfc),"ENSEMBL", "SYMBOL", org.Hs.eg.db)
+  background_symbols <-  as.vector(background_symbols[!is.na(symbols)])
   
+  if(foldchange_threshold == TRUE){
+    result_lfc <- result_lfc[abs(result_lfc$log2FoldChange) >= foldchange_threshold,]
+  }
+  else{
+    result_lfc <- result_lfc[!is.na(result_lfc$padj) & result_lfc$padj<= alpha,]
+  }
+  result_lfc <- result_lfc[rev(order(abs(result_lfc$log2FoldChange))),]
+  if(number_top_genes > length(rownames(result_lfc))) {number_top_genes <- length(rownames(result_lfc))}
+  data_symbols <- convertIDs(rownames(result_lfc)[1:number_top_genes],"ENSEMBL", "SYMBOL", org.Hs.eg.db)
+  data_symbols <- as.vector(data_symbols[!is.na(data_symbols)])
+  eTerm <- xEnricherGenes(data = data_symbols, background = background_symbols, ontology = ontology)
+  return(eTerm)
 }
