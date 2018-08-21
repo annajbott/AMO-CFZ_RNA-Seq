@@ -5,6 +5,7 @@ library(org.Hs.eg.db)
 library(gage)
 library(gageData)
 library("XGR")
+library(tidyverse)
 
 results_process <- function(dds, contrast, alpha, significant_only = TRUE, foldchange_threshold = FALSE){
   result_noshrink <- results(dds, contrast = contrast, alpha = alpha)
@@ -132,7 +133,7 @@ pathway_full <- function(dds, contrast, gset, same_direction = TRUE, alpha = 0.0
   return(final)
 }
 # For XGR pathway analysis
-enricher_analysis <- function(dds, contrast, ontology, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200){
+enricher_analysis <- function(dds, contrast, ontology, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200, same.dir = TRUE, network = FALSE){
   result_noshrink <- results(dds, contrast = contrast, alpha = alpha)
   result_lfc <- lfcShrink(dds, contrast = contrast, res = result_noshrink)
   background_symbols <- convertIDs(rownames(result_lfc),"ENSEMBL", "SYMBOL", org.Hs.eg.db)
@@ -145,9 +146,52 @@ enricher_analysis <- function(dds, contrast, ontology, alpha = 0.05, foldchange_
     result_lfc <- result_lfc[!is.na(result_lfc$padj) & result_lfc$padj<= alpha,]
   }
   result_lfc <- result_lfc[rev(order(abs(result_lfc$log2FoldChange))),]
+  if(same.dir != TRUE){
+    # Separate up and down regulated genes
+    result_lfc_up <- result_lfc[result_lfc$log2FoldChange > 0,]
+    result_lfc_down <- result_lfc[result_lfc$log2FoldChange < 0,]
+    ifelse(number_top_genes > length(rownames(result_lfc_up)),number_top_genes_up <- length(rownames(result_lfc_up)), number_top_genes_up <- number_top_genes)
+    ifelse(number_top_genes > length(rownames(result_lfc_down)), number_top_genes_down <- length(rownames(result_lfc_down)), number_top_genes_down <- number_top_genes)
+    data_symbols_up <- convertIDs(rownames(result_lfc_up)[1:number_top_genes_up],"ENSEMBL", "SYMBOL", org.Hs.eg.db)
+    data_symbols_up <- as.vector(data_symbols_up[!is.na(data_symbols_up)])
+    data_symbols_down <- convertIDs(rownames(result_lfc_down)[1:number_top_genes_down],"ENSEMBL", "SYMBOL", org.Hs.eg.db)
+    data_symbols_down <- as.vector(data_symbols_down[!is.na(data_symbols_down)])
+    eTerm_up <- xEnricherGenes(data = data_symbols_up, background = background_symbols, ontology = ontology)
+    eTerm_down <- xEnricherGenes(data = data_symbols_down, background = background_symbols, ontology = ontology)
+    final <- list(xEnrichConciser(eTerm_up), xEnrichConciser(eTerm_down))
+  }else{
+  # All genes, up or down regulated
   if(number_top_genes > length(rownames(result_lfc))) {number_top_genes <- length(rownames(result_lfc))}
   data_symbols <- convertIDs(rownames(result_lfc)[1:number_top_genes],"ENSEMBL", "SYMBOL", org.Hs.eg.db)
   data_symbols <- as.vector(data_symbols[!is.na(data_symbols)])
   eTerm <- xEnricherGenes(data = data_symbols, background = background_symbols, ontology = ontology)
-  return(eTerm)
+  final <- xEnrichConciser(eTerm, cutoff = c(0.9, 0.5), verbose = F)
+  }
+  return(final)
+}
+
+
+# For XGR network subnetergenes
+subneter_analysis <- function(dds, contrast, ontology, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 500, network = "STRING_high", subnet.size=75){
+  result_noshrink <- results(dds, contrast = contrast, alpha = alpha)
+  result_lfc <- lfcShrink(dds, contrast = contrast, res = result_noshrink)
+  # Use FC instead of p values
+  if(foldchange_threshold == TRUE){
+    result_lfc <- result_lfc[abs(result_lfc$log2FoldChange) >= foldchange_threshold,]
+  }
+  else{
+    result_lfc <- result_lfc[!is.na(result_lfc$padj) & result_lfc$padj<= alpha,]
+  }
+  result_lfc <- result_lfc[rev(order(abs(result_lfc$log2FoldChange))),]
+
+  
+  
+  result_lfc$data_symbols <- convertIDs(rownames(result_lfc),"ENSEMBL", "SYMBOL", org.Hs.eg.db)
+  result_lfc <- result_lfc[!is.na(result_lfc$data_symbols),]
+  if(number_top_genes > length(rownames(result_lfc))) {number_top_genes <- length(rownames(result_lfc))}
+  data <- as.data.frame(result_lfc[,c("data_symbols", "padj")])
+  rownames(data) <- NULL
+  data <- data[1:number_top_genes,]
+  subnet <- xSubneterGenes(data= data, network= network, subnet.size= subnet.size, RData.location=RData.location)
+  return(subnet)
 }
