@@ -161,6 +161,8 @@ lapply(kegg_26_6_go[[1]], head)
 
 
 ## XGR ##
+## --- ##
+
 library("XGR")
 ontology <- "MsigdbC2KEGG"
 # Use XGR and deseq2 results for differentially expressed genes in xEnricherGenes function to find key pathways affected
@@ -177,3 +179,25 @@ eTerm_13_24 <- enricher_analysis(dds_deseq24, c("Compound", "13", "DMSO"), ontol
 xEnrichViewer(eTerm_26_6)
 bp <- xEnrichBarplot(eTerm_26_24, top_num="auto", displayBy="adjp")
 print(bp)
+
+list_eTerm <- list(eTerm_26_6, eTerm_26_24, eTerm_13_6, eTerm_13_24)
+names(list_eTerm) <- c('NCP26- 6hr', 'NCP26- 24hr', 'MAZ13- 6hr', 'MAZ13- 24hr')
+bp_Pathway <- xEnrichCompare(list_eTerm, displayBy="fc", FDR.cutoff=5e-3, wrap.width=50)
+bp_Pathway + theme(axis.text.y=element_text(size=10))
+
+
+eTerm_26_6_re <- enricher_analysis(dds_deseq, c("Compound", "26", "DMSO"), ontology = "REACTOME", alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200, same.dir =  TRUE)
+eTerm_13_6_re <- enricher_analysis(dds_deseq, c("Compound", "13", "DMSO"), ontology = "MsigdbC2REACTOME", alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200, same.dir =  TRUE)
+
+# Use log fold change threshold rather than q values, as only 2 replicates for DMSO, so SE is not very useful
+eTerm_26_24_re <- enricher_analysis(dds_deseq24, c("Compound", "26", "DMSO"), ontology = "MsigdbC2REACTOME", foldchange_threshold = 1, number_top_genes = 200, same.dir =  FALSE)
+eTerm_13_24_re <- enricher_analysis(dds_deseq24, c("Compound", "13", "DMSO"), ontology = "MsigdbC2REACTOME", foldchange_threshold = 1, number_top_genes = 200, same.dir =  FALSE)
+
+list_eTerm_re <- list(eTerm_26_6_re, eTerm_26_24_re, eTerm_13_6_re, eTerm_13_24_re)
+names(list_eTerm_re) <- c('NCP26- 6hr', 'NCP26- 24hr', 'MAZ13- 6hr', 'MAZ13- 24hr')
+bp_Pathway_re <- xEnrichCompare(list_eTerm_re, displayBy="fc", FDR.cutoff=5e-4, wrap.width=50)
+bp_Pathway_re + theme(axis.text.y=element_text(size=10))
+
+
+subnet_26_6 <- subneter_analysis(dds_deseq, c("Compound", "26", "DMSO"), ontology = "REACTOME", alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 500)
+xVisNet(g=subnet_26_6, pattern=-log10(as.numeric(V(subnet)$significance)),vertex.shape="sphere", colormap="yr")
