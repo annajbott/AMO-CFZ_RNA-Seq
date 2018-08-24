@@ -68,7 +68,7 @@ dds_24
 dds_24$Compound <- relevel(dds_24$Compound, ref = "DMSO")
 
 # Contrasting compounds against DMSO, using p adjusted value of 5% as cut off.
-dds_deseq24 <- DESeq(dds_24)
+dds_deseq24_o <- DESeq(dds_24)
 
 ######################################
 ## Differential Expression Analysis ##
@@ -82,10 +82,10 @@ res_18_lfc <- results_process(dds_deseq, contrast = c("Compound", "18", "DMSO"),
 # NCP 22 has no genes with adj p value under 0.05.
 
 ## 24 hour results ##
-res_26_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "26", "DMSO"), alpha = 0.05 )
-res_22_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "22", "DMSO"), alpha = 0.05 )
-res_13_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "13", "DMSO"), alpha = 0.05 )
-res_18_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "18", "DMSO"), alpha = 0.05 )
+res_26_lfc_24 <- results_process(dds_deseq24_o, contrast = c("Compound", "26", "DMSO"), alpha = 0.05 )
+res_22_lfc_24 <- results_process(dds_deseq24_o, contrast = c("Compound", "22", "DMSO"), alpha = 0.05 )
+res_13_lfc_24 <- results_process(dds_deseq24_o, contrast = c("Compound", "13", "DMSO"), alpha = 0.05 )
+res_18_lfc_24 <- results_process(dds_deseq24_o, contrast = c("Compound", "18", "DMSO"), alpha = 0.05 )
 # NCP 22 and MAZ 18 compounds have no genes with a padj value <0.05, compared to DMSO. 
 
 # All unique differentially expressed genes (padj <0.05) with accompanying gene hgnc symbols, for 6hr and 24 hr
@@ -152,23 +152,29 @@ plotMA(res_18_lfc_24, ylim = c(-2,2))
 
 rld <- rlog(dds_deseq, blind=FALSE)
 # 24
-rld24 <- rlog(dds_deseq24, blind=FALSE) 
+rld24_o <- rlog(dds_deseq24_o, blind=FALSE) 
 # Blind true, compare samples unbiased by prior info on samples. False for downstream analysis, maybe should be true?
 
 ## PCA plots ##
 plotPCA(rld, intgroup="Compound")
-plotPCA(rld24, intgroup="Compound")
+plotPCA(rld24_o, intgroup="Compound")
 
 # 2 outliers from 24 hour PCA, 1 DMSO and 1 MAZ 18. Affects PC1
-rv <- rowVars(assay(rld24))
+rv <- rowVars(assay(rld24_o))
 select_rv <- order(rv, decreasing = TRUE)[seq_len(min(500, 
                                                       length(rv)))]
-pca <- prcomp(t(assay(rld24)[select_rv, ]))
+pca <- prcomp(t(assay(rld24_o)[select_rv, ]))
 
 pca_rot <- as.data.frame(pca$rotation[,1:2])
-PC1 <- pca_rot[rev(order(pca_rot$PC1)),][1:30,] # Order by genes contributing most variation to PC1
-PC1 <- cbind(gene_id_name_raw(rownames(PC1)),PC1)[,1:3]
+PC1 <- pca_rot[rev(order(pca_rot$PC1)),][1:100,] # Order by genes contributing most variation to PC1
+symbols <- convertIDs(rownames(PC1), "ENSEMBL", "SYMBOL", org.Hs.eg.db)
+PC1$symbols <- convertIDs(rownames(PC1), "ENSEMBL", "SYMBOL", org.Hs.eg.db)
+PC1 <- PC1[,c("symbols","PC1")]
+PC1 <- PC1[!is.na(PC1$symbols),]
 
+eTerm_PC1 <- xEnricherGenes(data = PC1$symbols, ontology = "MsigdbC2KEGG")
+eTerm_PC1_re <- xEnricherGenes(data = PC1$symbols, ontology = "REACTOME")
+lapply(eTerm_PC1_re$annotation,head)$
 
 # Heat map, sample distances #
 
@@ -183,7 +189,7 @@ pheatmap(sampleDistMatrix,
          col=colors)
 
 # Heat map 24
-sampleDists <- dist(t(assay(rld24)))
+sampleDists <- dist(t(assay(rld24_o)))
 sampleDistMatrix <- as.matrix(sampleDists)
 rownames(sampleDistMatrix) <- rld$Compound
 colnames(sampleDistMatrix) <- NULL
@@ -227,9 +233,9 @@ ggplot(data=plot_table_tidy, aes(x=gene, y=Log2FoldChange, fill = Compound)) +
 
 ## Plot of gene log fold change 6 hr vs 24 hr ##
 all_results_26_6 <- results_process(dds_deseq, contrast = c("Compound", "26", "DMSO"), alpha = 0.05, significant_only = FALSE)
-all_results_26_24 <- results_process(dds_deseq24, contrast = c("Compound", "26", "DMSO"), alpha = 0.05, significant_only = FALSE)
+all_results_26_24 <- results_process(dds_deseq24_o, contrast = c("Compound", "26", "DMSO"), alpha = 0.05, significant_only = FALSE)
 all_results_13_6 <- results_process(dds_deseq, contrast = c("Compound", "13", "DMSO"), alpha = 0.05, significant_only = FALSE)
-all_results_13_24 <- results_process(dds_deseq24, contrast = c("Compound", "13", "DMSO"), alpha = 0.05, significant_only = FALSE)
+all_results_13_24 <- results_process(dds_deseq24_o, contrast = c("Compound", "13", "DMSO"), alpha = 0.05, significant_only = FALSE)
 
 # Get rid of NAs and blank p values. Make match
 #26
