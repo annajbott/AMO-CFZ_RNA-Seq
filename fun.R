@@ -137,7 +137,7 @@ enricher_analysis <- function(dds, contrast, ontology, alpha = 0.05, foldchange_
   result_noshrink <- results(dds, contrast = contrast, alpha = alpha)
   result_lfc <- lfcShrink(dds, contrast = contrast, res = result_noshrink)
   background_symbols <- convertIDs(rownames(result_lfc),"ENSEMBL", "SYMBOL", org.Hs.eg.db)
-  background_symbols <-  as.vector(background_symbols[!is.na(symbols)])
+  background_symbols <-  as.vector(background_symbols[!is.na(background_symbols)])
   
   if(foldchange_threshold == TRUE){
     result_lfc <- result_lfc[abs(result_lfc$log2FoldChange) >= foldchange_threshold,]
@@ -192,6 +192,16 @@ subneter_analysis <- function(dds, contrast, ontology, alpha = 0.05, foldchange_
   data <- as.data.frame(result_lfc[,c("data_symbols", "padj")])
   rownames(data) <- NULL
   data <- data[1:number_top_genes,]
-  subnet <- xSubneterGenes(data= data, network= network, subnet.size= subnet.size, RData.location=RData.location)
+  subnet <- xSubneterGenes(data= data, network= network, subnet.size= subnet.size)
   return(subnet)
+}
+
+find_tf <- function(gene_list, tf_reference){
+  tf_gene_list <- c()
+  for(i in gene_list){
+    if(any(tf_reference == i )){
+      tf_gene_list <- c(tf_gene_list,i)
+    }
+  }
+  return(tf_gene_list)
 }
