@@ -109,23 +109,20 @@ write.csv(genes_data, file = "top50_PC1.csv", row.names = FALSE)
 ## Differential expression analysis without outliers ##
 ## ------------------------------------------------- ##
 
-res_26_lfc <- results_process(dds_deseq, contrast = c("Compound", "26", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = FALSE )
-res_22_lfc <- results_process(dds_deseq, contrast = c("Compound", "22", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = FALSE )
-res_13_lfc <- results_process(dds_deseq, contrast = c("Compound", "13", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = FALSE )
-res_18_lfc <- results_process(dds_deseq, contrast = c("Compound", "18", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = FALSE )
+res_26_lfc <- results_process(dds_deseq, contrast = c("Compound", "26", "DMSO"), alpha = 0.05, significant_only = TRUE, foldchange_threshold = 1 )
+res_22_lfc <- results_process(dds_deseq, contrast = c("Compound", "22", "DMSO"), alpha = 0.05, significant_only = TRUE, foldchange_threshold = FALSE )
+res_13_lfc <- results_process(dds_deseq, contrast = c("Compound", "13", "DMSO"), alpha = 0.05, significant_only = TRUE, foldchange_threshold = 1 )
+res_18_lfc <- results_process(dds_deseq, contrast = c("Compound", "18", "DMSO"), alpha = 0.05, significant_only = TRUE, foldchange_threshold = FALSE )
 
 # Taken out a replicate so padj values are using sd with only two replicates, instead set threshold as 1 log2 fold change (double expression)
-res_26_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "26", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = FALSE)
-res_22_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "22", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = FALSE)
-res_13_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "13", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = FALSE )
-res_18_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "18", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = FALSE )
+res_26_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "26", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = 1)
+res_22_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "22", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = 1)
+res_13_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "13", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = 1 )
+res_18_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "18", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = 1 )
 
 ######################
 ## Pathway Analysis ##
 ######################
-
-# Might be needed later???
-out.suffix <- "deseq2"
 
 ## Using GATE and KEGG ##
 ## ------------------- ##
@@ -141,10 +138,6 @@ kegg_13_6 <-  pathway_full(dds = dds_deseq, contrast = c("Compound", "13", "DMSO
 kegg_13_24 <- pathway_full(dds = dds_deseq24, contrast = c("Compound", "13", "DMSO"), gset = kegg.sigmet,  same_direction = TRUE)
 # Test
 lapply(kegg_13_24[[1]], head)
-
-kegg_26 <- kegg_26_6[[1]]
-fc_kegg_26 <- kegg_26_6[[2]]
-
 
 gs <- unique(unlist(kegg.sigmet[rownames(kegg_26$greater)[1]]))
 fc_kegg_26 <- cbind(fc_kegg_26) # From biostar forum
@@ -190,8 +183,8 @@ eTerm_26_6_re <- enricher_analysis(dds_deseq, c("Compound", "26", "DMSO"), ontol
 eTerm_13_6_re <- enricher_analysis(dds_deseq, c("Compound", "13", "DMSO"), ontology = "MsigdbC2REACTOME", alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200, same.dir =  TRUE)
 
 # Use log fold change threshold rather than q values, as only 2 replicates for DMSO, so SE is not very useful
-eTerm_26_24_re <- enricher_analysis(dds_deseq24, c("Compound", "26", "DMSO"), ontology = "MsigdbC2REACTOME", foldchange_threshold = 1, number_top_genes = 200, same.dir =  FALSE)
-eTerm_13_24_re <- enricher_analysis(dds_deseq24, c("Compound", "13", "DMSO"), ontology = "MsigdbC2REACTOME", foldchange_threshold = 1, number_top_genes = 200, same.dir =  FALSE)
+eTerm_26_24_re <- enricher_analysis(dds_deseq24, c("Compound", "26", "DMSO"), ontology = "MsigdbC2REACTOME", foldchange_threshold = 1, number_top_genes = 200, same.dir =  TRUE)
+eTerm_13_24_re <- enricher_analysis(dds_deseq24, c("Compound", "13", "DMSO"), ontology = "MsigdbC2REACTOME", foldchange_threshold = 1, number_top_genes = 200, same.dir =  TRUE)
 
 list_eTerm_re <- list(eTerm_26_6_re, eTerm_26_24_re, eTerm_13_6_re, eTerm_13_24_re)
 names(list_eTerm_re) <- c('NCP26- 6hr', 'NCP26- 24hr', 'MAZ13- 6hr', 'MAZ13- 24hr')
@@ -200,4 +193,14 @@ bp_Pathway_re + theme(axis.text.y=element_text(size=10))
 
 
 subnet_26_6 <- subneter_analysis(dds_deseq, c("Compound", "26", "DMSO"), ontology = "REACTOME", alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 500)
-xVisNet(g=subnet_26_6, pattern=-log10(as.numeric(V(subnet)$significance)),vertex.shape="sphere", colormap="yr")
+xVisNet(g=subnet_26_6, pattern=-log10(as.numeric(V(subnet_26_6)$significance)),vertex.shape="sphere", colormap="yr", signature = FALSE, newpage = FALSE)
+#
+subnet_26_24 <- subneter_analysis(dds_deseq24, c("Compound", "26", "DMSO"), ontology = "REACTOME", foldchange_threshold = 1, number_top_genes = 500)
+xVisNet(g=subnet_26_24, pattern=-log10(as.numeric(V(subnet_26_24)$significance)),vertex.shape="sphere", colormap="yr", signature = FALSE, newpage = FALSE)
+#
+subnet_13_6 <- subneter_analysis(dds_deseq, c("Compound", "13", "DMSO"), ontology = "REACTOME", alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 500)
+xVisNet(g=subnet_13_6, pattern=-log10(as.numeric(V(subnet_13_6)$significance)),vertex.shape="sphere", colormap="yr", signature = FALSE, newpage = FALSE)
+#
+subnet_13_24 <- subneter_analysis(dds_deseq24, c("Compound", "13", "DMSO"), ontology = "REACTOME", foldchange_threshold = 1, number_top_genes = 500)
+xVisNet(g=subnet_13_24, pattern=-log10(as.numeric(V(subnet_13_24)$significance)),vertex.shape="sphere", colormap="yr", signature = FALSE, newpage = FALSE)
+#
