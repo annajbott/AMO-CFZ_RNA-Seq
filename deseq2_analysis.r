@@ -263,23 +263,24 @@ all(rownames(kept_13) == rownames(kept2_13)) # Right order
 time_vs_26 <- as.data.frame(cbind(kept$log2FoldChange, kept2$log2FoldChange))
 rownames(time_vs_26) <- rownames(kept)
 colnames(time_vs_26) <- c("log_fold_change_6hr", "log_fold_change_24hr")
-time_vs_26$threshold_status <- ifelse(time_vs_26$log_fold_change_6hr > 1 & time_vs_26$log_fold_change_24hr > 1, TRUE, FALSE )
+time_vs_26$threshold_status <- ifelse(abs(time_vs_26$log_fold_change_6hr) >= 1 & abs(time_vs_26$log_fold_change_24hr) >= 1, TRUE, FALSE)
 ggplot(time_vs_26, aes(x=log_fold_change_6hr, y=log_fold_change_24hr, color = threshold_status)) + geom_point() +
- labs(x = "Log 2 Fold Change (NCP 26 vs DMSO)- 6hr", y =  "Log 2 Fold Change (NCP 26 vs DMSO)- 24hr" ) +
+ labs(x = "Log 2 Fold Change (NCP 26 vs DMSO)- 6hr", y =  "Log 2 Fold Change (NCP 26 vs DMSO)- 24hr", color = "Exceed threshold" ) +
   scale_colour_manual(values = c("Black", "Red")) +
   geom_abline(intercept = 0, slope = 1) +
   geom_hline(yintercept = 0) +
   geom_vline(xintercept = 0)
+
 
 # 13 data frame and plot
 time_vs_13 <- as.data.frame(cbind(kept_13$log2FoldChange, kept2_13$log2FoldChange))
 rownames(time_vs_13) <- rownames(kept_13)
 colnames(time_vs_13) <- c("log_fold_change_6hr", "log_fold_change_24hr")
 # New column indicating if gene expression has doubled for both 6hr and 24 hr, can then colour graph using this variable
-time_vs_13$threshold_status <- ifelse(time_vs_13$log_fold_change_6hr > 1 & time_vs_13$log_fold_change_24hr > 1, TRUE, FALSE )
+time_vs_13$threshold_status <- ifelse(abs(time_vs_13$log_fold_change_6hr) >= 1 & abs(time_vs_13$log_fold_change_24hr) >= 1, TRUE, FALSE )
 ggplot(time_vs_13, aes(x=log_fold_change_6hr, y=log_fold_change_24hr, color = threshold_status)) + 
   geom_point() + 
-  labs(x = "Log 2 Fold Change (MAZ 13 vs DMSO)- 6hr", y =  "Log 2 Fold Change (MAZ 13 vs DMSO)- 24hr" ) +
+  labs(x = "Log 2 Fold Change (MAZ 13 vs DMSO)- 6hr", y =  "Log 2 Fold Change (MAZ 13 vs DMSO)- 24hr", color = "Exceed threshold" ) +
   scale_colour_manual(values = c("Black", "Red")) +
   geom_abline(intercept = 0, slope = 1) +
   geom_hline(yintercept = 0) +
