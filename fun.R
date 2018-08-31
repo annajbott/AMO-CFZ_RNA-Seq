@@ -105,14 +105,24 @@ res_ouput <- function(result_lfc, gset, same_dir = TRUE, kegg_output = TRUE){
   
   return(final)
 }
-dds_get <- function(gene_data, coldata, prefilter = 10, reference = "DMSO"){
-  dds <-  DESeqDataSetFromMatrix(countData = gene_data,
-                                 colData = coldata,
-                                 design = ~ Compound)
-  # Prefiltering, removing rows with sum of counts under 10 #
-  keep <- rowSums(counts(dds)) >= prefilter
-  dds <- dds[keep,]
-  dds$Compound <- relevel(dds$Compound, ref = reference)
+dds_get <- function(gene_data, coldata, prefilter = 10, reference = "DMSO", cell_type = FALSE){
+  if(cell_type == TRUE ){
+    dds <-  DESeqDataSetFromMatrix(countData = gene_data,
+                                   colData = coldata,
+                                   design = ~CellType)
+    keep <- rowSums(counts(dds)) >= prefilter
+    dds <- dds[keep,]
+    dds$CellType <- relevel(dds$CellType, ref = reference)
+  }else{
+    dds <-  DESeqDataSetFromMatrix(countData = gene_data,
+                                   colData = coldata,
+                                   design = ~Compound)
+    # Prefiltering, removing rows with sum of counts under 10 #
+    keep <- rowSums(counts(dds)) >= prefilter
+    dds <- dds[keep,]
+    dds$Compound <- relevel(dds$Compound, ref = reference)
+  }
+
   
   dds_deseq <- DESeq(dds)
   return(dds_deseq)
@@ -133,9 +143,11 @@ pathway_full <- function(dds, contrast, gset, same_direction = TRUE, alpha = 0.0
   return(final)
 }
 # For XGR pathway analysis
-enricher_analysis <- function(dds, contrast, ontology, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200, same.dir = TRUE, network = FALSE){
-  result_noshrink <- results(dds, contrast = contrast, alpha = alpha)
-  result_lfc <- lfcShrink(dds, contrast = contrast, res = result_noshrink)
+enricher_analysis <- function(dds, contrast, ontology, result_lfc = NULL, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200, same.dir = TRUE, network = FALSE){
+  if(is.null(result_lfc)){
+    result_noshrink <- results(dds, contrast = contrast, alpha = alpha)
+    result_lfc <- lfcShrink(dds, contrast = contrast, res = result_noshrink)
+  }
   background_symbols <- convertIDs(rownames(result_lfc),"ENSEMBL", "SYMBOL", org.Hs.eg.db)
   background_symbols <-  as.vector(background_symbols[!is.na(background_symbols)])
   
