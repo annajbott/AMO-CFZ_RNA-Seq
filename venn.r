@@ -79,11 +79,12 @@ grid.draw(v24)
 #################################
 
 TF_csv <- read_csv("temp/TFCheckpoint.csv")
-summary(TF_csv)
+
 colnames(TF_csv)
 hs_tf <- dplyr::select(TF_csv, c("gene_symbol", "entrez_human", "gene_name", "synonym", "DbTF"))
 head(hs_tf)
 
+all_genes <- unique(c(names_13_6,names_13_24,names_26_6,names_26_24))
 maz_only_6 <- setdiff(names_13_6, names_26_6)
 ncp_only_6 <- setdiff(names_26_6, names_13_6)
 both_6 <- intersect(names_26_6, names_13_6)
@@ -98,7 +99,25 @@ tf_ncp_only_6 <- find_tf(ncp_only_6, hs_tf$gene_symbol)
 tf_ncp_only_24 <- find_tf(ncp_only_24, hs_tf$gene_symbol)
 tf_both_6 <- find_tf(both_6, hs_tf$gene_symbol)
 tf_both_24 <- find_tf(both_24, hs_tf$gene_symbol)
+tf_all <- find_tf(all_genes, hs_tf$gene_symbol)
 
+tf_names_13_6 <- find_tf(names_13_6, hs_tf$gene_symbol)
+tf_names_13_24 <- find_tf(names_13_24, hs_tf$gene_symbol)
+tf_names_26_6 <- find_tf(names_26_6, hs_tf$gene_symbol)
+tf_names_26_24 <- find_tf(names_26_24, hs_tf$gene_symbol)
+
+v_tf <- venn.diagram(list(NCP_26_6hr=tf_names_26_6, NCP_26_24hr = tf_names_26_24, MAZ_13_6hr=tf_names_13_6, MAZ_13_24hr = tf_names_13_24),
+                  fill = c("orange", "red", "blue", "green"),
+                  alpha = c(0.5, 0.5, 0.5, 0.5), cat.cex = 0.8, cex=0.5,
+                  filename=NULL)
+grid.newpage()
+grid.draw(v_tf)
+lapply(v_tf, function(i) i$label)
+for(i in 9:23){
+  v_tf[[i]]$label  <- " " 
+}
+grid.newpage()
+grid.draw(v_tf)
 # No experimental backing up TRIB 3 as transcription factor
 
 ## Filtering for TFs backed up with experimental evidence for:
@@ -122,3 +141,7 @@ tfcat_csv <- read.csv("temp/TFCAT.csv")
 a <- read_csv('coldata.csv', col_types=list('Compound'='_', TimePoint='c'))
 
 a
+# Human tfdb database
+tfdb_txt <- read.delim("temp/human_tfdb.txt")
+
+tfdb_maz_13_6 <- find_tf(names_13_6, tfdb_txt$Symbol )
