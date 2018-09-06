@@ -89,10 +89,11 @@ convertIDs <- function( ids, from, to, db, ifMultiple=c("putNA", "useFirst")) {
   return( selRes[ match( ids, selRes[,1] ), 2 ] )
 }
 
-res_ouput <- function(result_lfc, gset, same_dir = TRUE, kegg_output = TRUE){
+res_ouput <- function(result_lfc, gset, same_dir = TRUE, kegg_output = TRUE, alpha = 1){
   result_lfc$gene_name <- convertIDs(row.names(result_lfc), "ENSEMBL", "SYMBOL", org.Hs.eg.db)
   result_lfc$entrez_id <- convertIDs(row.names(result_lfc), "ENSEMBL", "ENTREZID", org.Hs.eg.db)
-  result_lfc <- result_lfc[!is.na(result_lfc$entrez_id) == TRUE,]
+  result_lfc <- result_lfc[!is.na(result_lfc$entrez_id) == TRUE & !is.na(result_lfc$padj)& result_lfc$padj<= alpha,]
+  result_lfc <- result_lfc[rev(order(abs(result_lfc$log2FoldChange))),]
   if( kegg_output != TRUE){
     final <- as.data.frame(result_lfc[,c("gene_name", "entrez_id", "log2FoldChange")])
   }
@@ -216,4 +217,29 @@ find_tf <- function(gene_list, tf_reference){
     }
   }
   return(tf_gene_list)
+}
+
+res_useful <- function(result_lfc, alpha = 1, tf = NULL){
+  result_lfc <- result_lfc[,c(1,2,6)]
+  result_lfc$gene_name <- convertIDs(row.names(result_lfc), "ENSEMBL", "SYMBOL", org.Hs.eg.db)
+  result_lfc$entrez_id <- convertIDs(row.names(result_lfc), "ENSEMBL", "ENTREZID", org.Hs.eg.db)
+  result_lfc <- result_lfc[!is.na(result_lfc$entrez_id) == TRUE ,]
+  if(alpha < 1){
+    result_lfc <- result_lfc[!is.na(result_lfc$padj)& result_lfc$padj<= alpha,]
+  }
+  result_lfc <- result_lfc[rev(order(abs(result_lfc$log2FoldChange))),]
+  if(!is.null(tf)){
+    TF_csv <- read_csv("temp/TFCheckpoint.csv")
+    hs_tf <- dplyr::select(TF_csv, c("gene_symbol", "entrez_human", "gene_name", "synonym", "DbTF"))
+    result_lfc$tf <- NULL
+    for(i in 1:length(rownames(result_lfc))){
+      result_lfc$tf[i] <- any(hs_tf$gene_symbol == result_lfc$gene_name[i] )
+    }
+    result_lfc <- as.data.frame(result_lfc)
+    result_lfc <- result_lfc[,c(4,5,1,2,3,6)]
+  }else{    
+    result_lfc <- as.data.frame(result_lfc)
+    result_lfc <- result_lfc[,c(4,5,1,2,3)]}
+
+  return(result_lfc)
 }
