@@ -109,16 +109,29 @@ write.csv(genes_data, file = "top50_PC1.csv", row.names = FALSE)
 ## Differential expression analysis without outliers ##
 ## ------------------------------------------------- ##
 
-res_26_lfc <- results_process(dds_deseq, contrast = c("Compound", "26", "DMSO"), alpha = 0.05, significant_only = TRUE, foldchange_threshold = 1 )
-res_22_lfc <- results_process(dds_deseq, contrast = c("Compound", "22", "DMSO"), alpha = 0.05, significant_only = TRUE, foldchange_threshold = FALSE )
-res_13_lfc <- results_process(dds_deseq, contrast = c("Compound", "13", "DMSO"), alpha = 0.05, significant_only = TRUE, foldchange_threshold = 1 )
-res_18_lfc <- results_process(dds_deseq, contrast = c("Compound", "18", "DMSO"), alpha = 0.05, significant_only = TRUE, foldchange_threshold = FALSE )
+res_26_lfc <- results_process(dds_deseq, contrast = c("Compound", "26", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = FALSE )
+res_22_lfc <- results_process(dds_deseq, contrast = c("Compound", "22", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = FALSE )
+res_13_lfc <- results_process(dds_deseq, contrast = c("Compound", "13", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = FALSE )
+res_18_lfc <- results_process(dds_deseq, contrast = c("Compound", "18", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = FALSE )
 
 # Taken out a replicate so padj values are using sd with only two replicates, instead set threshold as 1 log2 fold change (double expression)
-res_26_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "26", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = 1)
-res_22_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "22", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = 1)
-res_13_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "13", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = 1 )
-res_18_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "18", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = 1 )
+res_26_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "26", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = FALSE)
+res_22_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "22", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = FALSE)
+res_13_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "13", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = FALSE )
+res_18_lfc_24 <- results_process(dds_deseq24, contrast = c("Compound", "18", "DMSO"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = FALSE )
+
+res_26_6_useful <- res_useful(res_26_lfc, tf = TRUE)
+res_22_6_useful <- res_useful(res_22_lfc, tf = TRUE)
+res_13_6_useful <- res_useful(res_13_lfc, tf = TRUE)
+res_18_6_useful <- res_useful(res_18_lfc, tf = TRUE)
+res_26_24_useful <- res_useful(res_26_lfc_24, tf = TRUE)
+res_22_24_useful <- res_useful(res_22_lfc_24, tf = TRUE)
+res_13_24_useful <- res_useful(res_13_lfc_24, tf = TRUE)
+res_18_24_useful <- res_useful(res_18_lfc_24, tf = TRUE)
+
+save(res_26_6_useful, res_22_6_useful, res_13_6_useful, res_18_6_useful,res_26_24_useful ,res_22_24_useful , res_13_24_useful , res_18_24_useful, file = "useful_deseq_results.RData")
+
+
 
 ######################
 ## Pathway Analysis ##
@@ -168,6 +181,9 @@ eTerm_13_6 <- enricher_analysis(dds_deseq, c("Compound", "13", "DMSO"), ontology
 eTerm_26_24 <- enricher_analysis(dds_deseq24, c("Compound", "26", "DMSO"), ontology = ontology, alpha = 0.05, foldchange_threshold = 1, number_top_genes = 200)
 eTerm_13_24 <- enricher_analysis(dds_deseq24, c("Compound", "13", "DMSO"), ontology = ontology, alpha = 0.05, foldchange_threshold = 1, number_top_genes = 200)
 
+eTerm_18_6 <- enricher_analysis(dds_deseq, c("Compound", "18", "DMSO"), ontology = ontology, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200)
+
+eTerm_18_6_max <- enricher_analysis(dds_deseq, c("Compound", "18", "DMSO"), ontology = "MsigdbC2REACTOME", alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 2000)
 
 xEnrichViewer(eTerm_26_6)
 bp <- xEnrichBarplot(eTerm_26_24, top_num="auto", displayBy="adjp")
@@ -192,15 +208,15 @@ bp_Pathway_re <- xEnrichCompare(list_eTerm_re, displayBy="fc", FDR.cutoff=5e-4, 
 bp_Pathway_re + theme(axis.text.y=element_text(size=10))
 
 
-subnet_26_6 <- subneter_analysis(dds_deseq, c("Compound", "26", "DMSO"), ontology = "REACTOME", alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 500)
-xVisNet(g=subnet_26_6, pattern=-log10(as.numeric(V(subnet_26_6)$significance)),vertex.shape="sphere", colormap="yr", signature = FALSE, newpage = FALSE)
+subnet_26_6 <- subneter_analysis(dds_deseq, c("Compound", "26", "DMSO"), ontology = "REACTOME", alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 500, subnet.size = 25)
+xVisNet(g=subnet_26_6, pattern=-log10(as.numeric(V(subnet_26_6)$significance)),vertex.shape="sphere", colormap="yr", signature = FALSE, newpage = FALSE, vertex.label.dist =0.4)
 #
-subnet_26_24 <- subneter_analysis(dds_deseq24, c("Compound", "26", "DMSO"), ontology = "REACTOME", foldchange_threshold = 1, number_top_genes = 500)
-xVisNet(g=subnet_26_24, pattern=-log10(as.numeric(V(subnet_26_24)$significance)),vertex.shape="sphere", colormap="yr", signature = FALSE, newpage = FALSE)
+subnet_26_24 <- subneter_analysis(dds_deseq24, c("Compound", "26", "DMSO"), ontology = "REACTOME", foldchange_threshold = 1, number_top_genes = 500, subnet.size = 25)
+xVisNet(g=subnet_26_24, pattern=-log10(as.numeric(V(subnet_26_24)$significance)),vertex.shape="sphere", colormap="yr", signature = FALSE, newpage = FALSE, vertex.label.dist =0.4)
 #
-subnet_13_6 <- subneter_analysis(dds_deseq, c("Compound", "13", "DMSO"), ontology = "REACTOME", alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 500)
-xVisNet(g=subnet_13_6, pattern=-log10(as.numeric(V(subnet_13_6)$significance)),vertex.shape="sphere", colormap="yr", signature = FALSE, newpage = FALSE)
+subnet_13_6 <- subneter_analysis(dds_deseq, c("Compound", "13", "DMSO"), ontology = "REACTOME", alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 500,  subnet.size = 25)
+xVisNet(g=subnet_13_6, pattern=-log10(as.numeric(V(subnet_13_6)$significance)),vertex.shape="sphere", colormap="yr", signature = FALSE, newpage = FALSE, vertex.label.dist =0.4)
 #
-subnet_13_24 <- subneter_analysis(dds_deseq24, c("Compound", "13", "DMSO"), ontology = "REACTOME", foldchange_threshold = 1, number_top_genes = 500)
-xVisNet(g=subnet_13_24, pattern=-log10(as.numeric(V(subnet_13_24)$significance)),vertex.shape="sphere", colormap="yr", signature = FALSE, newpage = FALSE)
+subnet_13_24 <- subneter_analysis(dds_deseq24, c("Compound", "13", "DMSO"), ontology = "REACTOME", foldchange_threshold = 1, number_top_genes = 500, subnet.size = 25)
+xVisNet(g=subnet_13_24, pattern=-log10(as.numeric(V(subnet_13_24)$significance)),vertex.shape="sphere", colormap="yr", signature = FALSE, newpage = FALSE, vertex.label.dist =0.4)
 #
