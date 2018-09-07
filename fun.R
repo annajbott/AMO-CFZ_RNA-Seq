@@ -243,3 +243,27 @@ res_useful <- function(result_lfc, alpha = 1, tf = NULL){
 
   return(result_lfc)
 }
+
+up_regulated <- function(df1, df2){
+  
+  df1_sig <- df1[!is.na(df1$padj) & df1$padj < 0.05 ,]
+  df2_sig <- df2[!is.na(df2$padj) & df2$padj < 0.05 ,]
+  x <- c(df1_sig$gene_name, df2_sig$gene_name)
+  total <- n_distinct(x)
+  up1 <- n_distinct(df1_sig[df1_sig$log2FoldChange >0 ,])
+  down1 <- n_distinct(df1_sig[df1_sig$log2FoldChange <0 ,])
+  percent1 <- up1/(up1+down1)
+  up2 <- n_distinct(df2_sig[df2_sig$log2FoldChange >0 ,])
+  down2 <- n_distinct(df2_sig[df2_sig$log2FoldChange <0 ,])
+  percent2 <- up2/(up2+down2)
+  average_percent <- (percent1 + percent2)/2
+  if(length(rownames(df2_sig)) == 0 & length(rownames(df1_sig)) == 0){
+    average_percent <- NULL
+  }else if(length(rownames(df2_sig)) == 0){
+    average_percent <- percent1
+  }else if(length(rownames(df1_sig)) == 0){
+    average_percent <- percent2
+  }
+  return(list(total,average_percent))
+}
+  
