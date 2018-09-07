@@ -1,0 +1,39 @@
+---
+title: "RNA Seq AMO-CFZ"
+author: "Anna James-Bott"
+output:
+  html_document:
+    theme: cosmo
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
+```
+
+```{r libraries, include=FALSE}
+library("DESeq2")
+load("data_objects.RData")
+```
+
+# PCA plots 
+2 Outliers were removed from 24 hour time point. DMSO (reference compound) and MAZ 18 (less active compound)
+
+## 6 hour
+```{r load_6, echo = FALSE, message = FALSE, warning = FALSE, fig.align="center", cache =TRUE}
+plotPCA(rld, intgroup="Compound")
+```
+One of the NCP 22 samples may appear to be an outlier however it varies on PC2 which only accounts for 9% of the variance.
+
+## 24 hour {.tabset}
+### No outliers
+```{r load_24, echo = FALSE, message = FALSE, warning = FALSE, fig.align="center", cache = TRUE}
+plotPCA(rld24, intgroup="Compound")
+```
+One of the DMSO samples (reference compound) and one of the MAZ 18 samples (less active compound) excluded.
+
+### Outliers included
+```{r load_24_outliers, echo = FALSE, message = FALSE, warning = FALSE, fig.align="center", cache = TRUE}
+rld24_o <- readRDS("rld24_o.rds")
+plotPCA(rld24_o, intgroup="Compound")
+```
+PC2 accounts for differential expression between more active compounds and DMSO. PC1 affected by outliers.

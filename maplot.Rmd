@@ -1,0 +1,120 @@
+---
+title: "MA Plots"
+output:
+  html_document:
+    theme: cosmo
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries, include=FALSE, cache = TRUE}
+library("DESeq2")
+install.packages("rmarkdown", repos = "http://cran.us.r-project.org")
+load("data_objects.RData")
+```
+
+# MLE followed by MAP for each sample
+MLE (no shrinkage), MAP estimate (with shrinkage)
+
+## NCP 26 {.tabset}
+### 6 hour
+```{r load_26_6, echo = FALSE, message = FALSE, warning = FALSE, fig.align="center", cache =TRUE}
+
+contrast <- c("Compound", "26", "DMSO")
+dds <- dds_deseq
+result_noshrink <- results(dds, contrast = contrast, alpha = 0.05)
+result_lfc <- lfcShrink(dds, contrast = contrast, res = result_noshrink)
+
+plotMA(result_noshrink, ylim = c(-2,2))
+plotMA(result_lfc, ylim = c(-2,2))
+```
+
+### 24 hour
+```{r load_26_24, echo = FALSE, message = FALSE, warning = FALSE, fig.align="center", cache =TRUE}
+
+contrast <- c("Compound", "26", "DMSO")
+dds <- dds_deseq24
+result_noshrink <- results(dds, contrast = contrast, alpha = 0.05)
+result_lfc <- lfcShrink(dds, contrast = contrast, res = result_noshrink)
+
+plotMA(result_noshrink, ylim = c(-2,2))
+plotMA(result_lfc, ylim = c(-2,2))
+```
+
+## MAZ 13 {.tabset}
+### 6 hour
+```{r load_13_6, echo = FALSE, message = FALSE, warning = FALSE, fig.align="center", cache =TRUE}
+
+contrast <- c("Compound", "13", "DMSO")
+dds <- dds_deseq
+result_noshrink <- results(dds, contrast = contrast, alpha = 0.05)
+result_lfc <- lfcShrink(dds, contrast = contrast, res = result_noshrink)
+
+plotMA(result_noshrink, ylim = c(-2,2))
+plotMA(result_lfc, ylim = c(-2,2))
+```
+
+### 24 hour
+```{r load_13_24, echo = FALSE, message = FALSE, warning = FALSE, fig.align="center", cache =TRUE}
+
+contrast <- c("Compound", "13", "DMSO")
+dds <- dds_deseq24
+result_noshrink <- results(dds, contrast = contrast, alpha = 0.05)
+result_lfc <- lfcShrink(dds, contrast = contrast, res = result_noshrink)
+
+plotMA(result_noshrink, ylim = c(-2,2))
+plotMA(result_lfc, ylim = c(-2,2))
+```
+
+## NCP 22 {.tabset}
+### 6 hour
+```{r load_22_6, echo = FALSE, message = FALSE, warning = FALSE, fig.align="center", cache =TRUE}
+
+contrast <- c("Compound", "22", "DMSO")
+dds <- dds_deseq
+result_noshrink <- results(dds, contrast = contrast, alpha = 0.05)
+result_lfc <- lfcShrink(dds, contrast = contrast, res = result_noshrink)
+
+plotMA(result_noshrink, ylim = c(-2,2))
+plotMA(result_lfc, ylim = c(-2,2))
+```
+
+### 24 hour
+```{r load_22_24, echo = FALSE, message = FALSE, warning = FALSE, fig.align="center", cache =TRUE}
+
+contrast <- c("Compound", "22", "DMSO")
+dds <- dds_deseq24
+result_noshrink <- results(dds, contrast = contrast, alpha = 0.05)
+result_lfc <- lfcShrink(dds, contrast = contrast, res = result_noshrink)
+
+plotMA(result_noshrink, ylim = c(-2,2))
+plotMA(result_lfc, ylim = c(-2,2))
+```
+
+## MAZ 18 {.tabset} 
+### 6 hour
+```{r load_18_6, echo = FALSE, message = FALSE, warning = FALSE, fig.align="center", cache =TRUE}
+
+contrast <- c("Compound", "18", "DMSO")
+dds <- dds_deseq
+result_noshrink <- results(dds, contrast = contrast, alpha = 0.05)
+result_lfc <- lfcShrink(dds, contrast = contrast, res = result_noshrink)
+
+plotMA(result_noshrink, ylim = c(-2,2))
+plotMA(result_lfc, ylim = c(-2,2))
+```
+
+### 24 hour
+```{r load_18_24, echo = FALSE, message = FALSE, warning = FALSE, fig.align="center", cache =TRUE}
+
+contrast <- c("Compound", "18", "DMSO")
+dds <- dds_deseq24
+result_noshrink <- results(dds, contrast = contrast, alpha = 0.05)
+result_lfc <- lfcShrink(dds, contrast = contrast, res = result_noshrink)
+
+plotMA(result_noshrink, ylim = c(-2,2))
+plotMA(result_lfc, ylim = c(-2,2))
+```

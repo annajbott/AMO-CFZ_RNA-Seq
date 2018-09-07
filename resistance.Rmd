@@ -1,0 +1,183 @@
+---
+title: "Carfilzomib resistance"
+output:
+  html_document:
+    theme: cosmo
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
+library(knitr)
+```
+
+# AMO-1 (WT)  vs AMO-CFZ cells treated with DMSO
+Exploring differences between cells treated with control. In theory the differences are due to carfilzomib resistance of the cells, gene differential expression might elucidate what is involved in CFZ resistance. But also stored separately since April so could be differences now due to other factors.  
+
+```{r libraries, include=FALSE}
+source("fun.R")
+library(tidyverse)
+library("DESeq2")
+library(org.Hs.eg.db)
+library("RColorBrewer")
+library(pheatmap)
+library("ggplot2")
+```
+
+
+```{r load_data, fig.align="center", include = FALSE}
+# Load CFZ genes
+CFZ_genes <- read.csv("CFZ_genes.csv", row.names = 1, check.names = FALSE)
+coldata_cfz <- read.csv("coldata.csv", row.names = 1)
+
+# Load WT
+WT_genes <- read.csv("WT_genes.csv", row.names = 1, check.names = FALSE)
+coldata_wt <- read.csv("coldata_wt.csv", row.names = 1)
+
+# Combine data
+coldata_DMSO <- rbind(coldata_cfz[coldata_cfz$Compound == "DMSO",],coldata_wt[coldata_wt$Compound == "DMSO",])
+coldata_DMSO$CellType <- rep(c("CFZ","WT"), each = 6, len = 12)
+coldata_DMSO$CellType <- as.factor(coldata_DMSO$CellType)
+coldata_DMSO$TimePoint <- as.factor(coldata_DMSO$TimePoint)
+coldata_DMSO <- dplyr::select(coldata_DMSO, -contains("Compound"))
+
+genes_DMSO <- cbind(dplyr::select(CFZ_genes, contains("DMSO")), dplyr::select(WT_genes, contains("DMSO")))
+
+```
+
+```{r format_data, fig.align="center", echo = FALSE, warning= FALSE, message= FALSE}
+## Separate time points ##
+## -------------------- ##
+
+coldata_DMSO_6 <- coldata_DMSO[coldata_DMSO$TimePoint == 6,]
+coldata_DMSO_24 <- coldata_DMSO[coldata_DMSO$TimePoint == 24,]
+
+genes_DMSO_6 <- dplyr::select(genes_DMSO, contains("t6"))
+genes_DMSO_24 <- dplyr::select(genes_DMSO, contains("t24"))
+
+```
+
+```{r deseq, fig.align="center", echo = FALSE, warning= FALSE, message= FALSE}
+## Deseq2 with separate time points ##
+dds_dmso_6 <- dds_get(gene_data = genes_DMSO_6, coldata = coldata_DMSO_6, prefilter = 10, reference = "WT", cell_type = TRUE)
+dds_dmso_24 <- dds_get(gene_data = genes_DMSO_24, coldata = coldata_DMSO_24, prefilter = 10, reference = "WT", cell_type = TRUE)
+```
+
+```{r deseq_all, fig.align="center", echo = FALSE, warning= FALSE, message= FALSE}
+## Deseq2 with separate time points ##
+dds_all <-  DESeqDataSetFromMatrix(countData = genes_DMSO,
+                               colData = coldata_DMSO,
+                               design = CellType~TimePoint)
+# Prefiltering, removing rows with sum of counts under 10 #
+keep <- rowSums(counts(dds_all)) >= 10
+dds_all <- dds_all[keep,]
+dds_all$CellType <- relevel(dds_all$CellType, ref = "WT")
+
+dds_all <- DESeq(dds_all)
+```
+
+## PCA plot
+Separated by cell type and time points. 
+```{r pca, fig.align="center", echo = FALSE, warning= FALSE, message= FALSE}
+# PCA 
+vst_all <- vst(dds_all, blind=FALSE)
+plotPCA(vst_all, intgroup=c("CellType","TimePoint"))
+```
+
+## Heat plot
+```{r heat, fig.align="center", echo = FALSE, warning= FALSE, message= FALSE}
+
+# heat map
+sampleDists <- dist(t(assay(vst_all)))
+sampleDistMatrix <- as.matrix(sampleDists)
+rownames(sampleDistMatrix) <- colnames(vst_all)
+colnames(sampleDistMatrix) <- NULL
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows=sampleDists,
+         clustering_distance_cols=sampleDists,
+         col=colors)
+```
+Large sample distance between CFZ resistant cells and WT cells. Within those groups, separation between 6 hours and 24 hours. Outlier in CFZ t24 group, but still closer to CFZ cells than WT.
+
+
+## Check CFZ vs WT 6hr against 24 hr 
+
+```{r results , fig.align="center", echo = FALSE, warning= FALSE, message= FALSE}
+res_dsmo_6 <- results_process(dds_dmso_6, contrast = c("CellType", "CFZ", "WT"), alpha = 0.05, significant_only = FALSE)
+res_dsmo_24 <- results_process(dds_dmso_24, contrast = c("CellType", "CFZ", "WT"), alpha = 0.05, significant_only = FALSE)
+```
+
+```{r plot_24_6 , fig.align="center", echo = FALSE, warning= FALSE, message= FALSE, fig.width= 14, fig.height= 8}
+image_path_drug_res_24_6 <- "Figures/drug_res_6hr_vs_24hr.png"
+include_graphics(image_path_drug_res_24_6)
+
+```
+10561 of 12212 genes are under threshold (86%), i.e gene expression does not increase/decrease by over two-fold (double/halve) from WT to CFZ. 611 genes increase expression, over threshold (more than double), 1040 genes decrease expression, over threshold (more than halve), 37% and 63% respectively. Additionally the most underexpressed genes have a much larger fold change than the most overexpressed genes.<br/>
+<br/>
+5539 genes were differentially expressed (padj <0.05) for 6 hr time points. 722 overexpressed (padj <0.05 and log fc > 1), 1323 underexpressed (padj <0.05 and log fc < -1).
+
+
+
+## XGR pathway analysis {.tabset}
+```{r xgr, fig.align="center", echo = FALSE, warning= FALSE, message= FALSE}
+eTerm_dmso_6 <- enricher_analysis(dds_dmso_6, c("CellType", "CFZ", "WT"), ontology = "MsigdbC2REACTOME", alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200)
+
+eTerm_dmso_24 <- enricher_analysis(dds_dmso_24, c("CellType", "CFZ", "WT"), ontology = "MsigdbC2REACTOME", alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200)
+```
+
+### 6 hour
+```{r xgr_bp_6, fig.align="center", echo = FALSE, warning= FALSE, message= FALSE}
+
+bp_6 <- xEnrichBarplot(eTerm_dmso_6, top_num="auto", displayBy="adjp")
+print(bp_6)
+```
+
+### 24 hour
+```{r xgr_bp_24, fig.align="center", echo = FALSE, warning= FALSE, message= FALSE}
+
+bp_24 <- xEnrichBarplot(eTerm_dmso_24, top_num="auto", displayBy="adjp")
+print(bp_24)
+```
+
+### Compare
+```{r xgr_bp_compare, fig.align="center", echo = FALSE, warning= FALSE, message= FALSE}
+
+list_eTerm <- list(eTerm_dmso_6, eTerm_dmso_24)
+names(list_eTerm) <- c('CFZ vs WT- 6hr', 'CFZ vs WT- 24hr')
+bp_Pathway <- xEnrichCompare(list_eTerm, displayBy="adjp", FDR.cutoff=5e-2, wrap.width=50)
+bp_Pathway + theme(axis.text.y=element_text(size=10))
+```
+
+## Transcription factors
+Loads of them so no venn diagram
+Intersection of TFs from 6hr CFZ vs WT and 24 hr CFZ vs WT differentially expressed genes (padj < 0.05 and abs(log fc) >= 1)
+
+```{r tf, fig.align="center", echo = FALSE, warning= FALSE, message= FALSE}
+#TF table from TFCheckpoint
+TF_csv <- read_csv("temp/TFCheckpoint.csv")
+hs_tf <- dplyr::select(TF_csv, c("gene_symbol", "entrez_human", "gene_name", "synonym", "DbTF"))
+
+#significant genes
+sig_dmso_6 <- res_ouput(res_dsmo_6, gset = NULL, kegg_output = FALSE, alpha = 0.05)
+sig_dmso_6_up <- sig_dmso_6[sig_dmso_6$log2FoldChange >= 1,]
+dmso_6_tf_up <- find_tf(sig_dmso_6_up$gene_name, hs_tf$gene_symbol)
+sig_dmso_6_down <- sig_dmso_6[sig_dmso_6$log2FoldChange <= -1,]
+dmso_6_tf_down <- find_tf(sig_dmso_6_down$gene_name, hs_tf$gene_symbol)
+
+
+sig_dmso_24 <- res_ouput(res_dsmo_24, gset = NULL, kegg_output = FALSE, alpha = 0.05)
+sig_dmso_24_up <- sig_dmso_24[sig_dmso_24$log2FoldChange >= 1,]
+dmso_24_tf_up <- find_tf(sig_dmso_24_up$gene_name, hs_tf$gene_symbol)
+sig_dmso_24_down <- sig_dmso_24[sig_dmso_24$log2FoldChange <= -1,]
+dmso_24_tf_down <- find_tf(sig_dmso_24_down$gene_name, hs_tf$gene_symbol)
+```
+
+### Upregulated transcription factors:
+```{r up_tf, echo=FALSE}
+paste(intersect(dmso_6_tf_up,dmso_24_tf_up), collapse = ", ")
+```
+
+### Downregulated transcription factors:
+```{r down_tf, echo = FALSE}
+paste(intersect(dmso_6_tf_down,dmso_24_tf_down), collapse = ", ")
+```

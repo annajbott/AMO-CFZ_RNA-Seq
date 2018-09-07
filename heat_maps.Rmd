@@ -1,0 +1,48 @@
+---
+title: "Heat Maps"
+output:
+  html_document:
+    theme: cosmo
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries, include=FALSE, cache = TRUE}
+library("DESeq2")
+library("RColorBrewer")
+library("pheatmap")
+library("IHW")
+load("data_objects.RData")
+```
+# Sample Distances
+
+## 6 hour 
+```{r heat_6, echo=FALSE, fig.align="center", cache = TRUE}
+sampleDists <- dist(t(assay(rld)))
+sampleDistMatrix <- as.matrix(sampleDists)
+rownames(sampleDistMatrix) <- rld$Compound
+colnames(sampleDistMatrix) <- NULL
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+pm <- pheatmap(sampleDistMatrix,
+         clustering_distance_rows=sampleDists,
+         clustering_distance_cols=sampleDists,
+         col=colors)
+print(pm)
+```
+
+## 24 hour 
+```{r heat_24, echo = FALSE, fig.align="center", cache = TRUE}
+sampleDists <- dist(t(assay(rld24)))
+sampleDistMatrix <- as.matrix(sampleDists)
+rownames(sampleDistMatrix) <- rld24$Compound
+colnames(sampleDistMatrix) <- NULL
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+pm <- pheatmap(sampleDistMatrix,
+         clustering_distance_rows=sampleDists,
+         clustering_distance_cols=sampleDists,
+         col=colors)
+print(pm)
+```
+

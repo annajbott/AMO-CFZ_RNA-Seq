@@ -1,0 +1,112 @@
+---
+title: "Gene Enrichment"
+output:
+  html_document:
+    theme: cosmo
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
+```
+
+```{r libraries, include=FALSE, cache = TRUE}
+library("DESeq2")
+library("XGR")
+load("data_objects.RData")
+```
+
+```{r source, include=FALSE, cache = TRUE}
+source("fun.R")
+library(knitr)
+```
+
+# Pathway analysis using the XGR package and REACTOME as a reference for gene annotation
+```{r xgr_func, echo = FALSE, message = FALSE, warning= FALSE, cache = TRUE}
+eTerm_26_6_re <- enricher_analysis(dds_deseq, c("Compound", "26", "DMSO"), ontology = "REACTOME", alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200, same.dir =  TRUE)
+eTerm_13_6_re <- enricher_analysis(dds_deseq, c("Compound", "13", "DMSO"), ontology = "REACTOME", alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200, same.dir =  TRUE)
+
+eTerm_26_24_re <- enricher_analysis(dds_deseq24, c("Compound", "26", "DMSO"), ontology = "REACTOME", foldchange_threshold = 1, number_top_genes = 200, same.dir =  TRUE)
+eTerm_13_24_re <- enricher_analysis(dds_deseq24, c("Compound", "13", "DMSO"), ontology = "REACTOME", foldchange_threshold = 1, number_top_genes = 200, same.dir =  TRUE)
+
+```
+## Top affected pathways {.tabset}
+### NCP 26- 6hr
+```{r graph_26_6, echo = FALSE, cache = TRUE}
+#xEnrichViewer(eTerm_26_6_re)
+bp <- xEnrichBarplot(eTerm_26_6_re, top_num= 15, displayBy="adjp")
+print(bp)
+```
+
+### NCP 26- 24hr
+```{r graph_26_24, echo = FALSE, cache = TRUE}
+#xEnrichViewer(eTerm_26_6_re)
+bp <- xEnrichBarplot(eTerm_26_24_re, top_num= 15, displayBy="adjp")
+print(bp)
+```
+
+### MAZ 13- 6hr
+```{r graph_13_6, echo = FALSE, cache = TRUE}
+#xEnrichViewer(eTerm_26_6_re)
+bp <- xEnrichBarplot(eTerm_13_6_re, top_num= 15, displayBy="adjp")
+print(bp)
+```
+
+### MAZ 13- 24hr
+```{r graph_13_24, echo = FALSE, cache = TRUE}
+#xEnrichViewer(eTerm_26_6_re)
+bp <- xEnrichBarplot(eTerm_13_24_re, top_num= 15, displayBy="adjp")
+print(bp)
+```
+
+### MAZ 18- 6hr 
+```{r graph_18_6, echo = FALSE, cache = TRUE, warning = FALSE, message= FALSE}
+#xEnrichViewer(eTerm_26_6_re)
+eTerm_18_6_re <- enricher_analysis(dds_deseq, c("Compound", "18", "DMSO"), ontology = "REACTOME", alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200, same.dir =  TRUE)
+bp <- xEnrichBarplot(eTerm_18_6_re, top_num= "auto", displayBy="adjp")
+print(bp)
+```
+
+## Comparison {.tabset}
+### P adj ordered
+```{r graph_compare, echo = FALSE, cache = TRUE}
+list_eTerm_re <- list(eTerm_26_6_re, eTerm_26_24_re, eTerm_13_6_re, eTerm_13_24_re)
+names(list_eTerm_re) <- c('26- 6hr', '26- 24hr', '13- 6hr', '13- 24hr')
+bp_Pathway_re <- xEnrichCompare(list_eTerm_re, displayBy="adjp", FDR.cutoff=5e-4, wrap.width=50)
+bp_Pathway_re + theme(axis.text.y=element_text(size=10))
+```
+
+### Enrichment fc
+```{r graph_compare_fc, echo = FALSE, cache = TRUE}
+bp_Pathway_re <- xEnrichCompare(list_eTerm_re, displayBy="fc", FDR.cutoff=5e-4, wrap.width=50)
+bp_Pathway_re + theme(axis.text.y=element_text(size=10))
+
+```
+
+
+## Subnetworks {.tabset}
+### NCP26- 6hr
+```{r sub_26_6, fig.align="center", echo = FALSE, cache = TRUE, fig.width= 15, fig.height= 8}
+image_path26_6 <- "Figures/subnetwork_26_6.png"
+image_path26_24 <- "Figures/subnetwork_26_24.png"
+image_path13_6 <- "Figures/subnetwork_13_6.png"
+image_path13_24 <- "Figures/subnetwork_13_24.png"
+include_graphics(image_path26_6)
+
+```
+
+### NCP 26- 24hr
+```{r sub_26_24, fig.align="center", echo = FALSE, cache = TRUE}
+include_graphics(image_path26_24)
+```
+
+### MAZ 13- 6hr
+```{r sub_13_6, fig.align="center", echo = FALSE, cache = TRUE, fig.width= 15, fig.height= 8}
+include_graphics(image_path13_6)
+```
+
+### MAZ 13- 24hr
+```{r sub_13_24, fig.align="center", echo = FALSE, cache = TRUE, fig.width= 15, fig.height= 8}
+include_graphics(image_path13_24)
+```
+
+##

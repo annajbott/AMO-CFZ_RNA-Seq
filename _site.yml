@@ -1,0 +1,18 @@
+name: "my-website"
+navbar:
+  title: "RNA Seq AMO-CFZ"
+  type: inverse
+  right:
+    - text: "Home"
+      icon: fa-home
+      href: index.html
+    - text: "MA Plots"
+      href: maplot.html
+    - text: "PCA Plots"
+      href: pca_plots.html
+    - text: "Heat Maps"
+      href: heat_maps.html
+    - text: "XGR"
+      href: xgr.html
+    - text: "Resistance"
+      href: resistance.html 

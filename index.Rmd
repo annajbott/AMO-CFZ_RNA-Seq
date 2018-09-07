@@ -1,0 +1,172 @@
+---
+title: " R Markdown for RNA Seq analysis of AMO-CFZ cells"
+author: "Anna James-Bott"
+date: "22 August 2018"
+header-includes:
+output:
+  html_document:
+    theme: cosmo
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
+library(knitr)
+```
+
+# Comparison of gene expression accross time points for the two more active compounds
+
+## MAZ 13 6hr vs 24hr
+```{r maz13_time_vs, fig.align="center", echo = FALSE, fig.width= 7, fig.height= 4}
+# Update
+image_path13 <- "Figures/MAZ13_6hr_vs_24hr_foldchange.png"
+image_path26 <- "Figures/NCP26_6hr_vs_24hr_foldchange.png"
+include_graphics(image_path13)
+
+```
+
+## NCP 26 6hr vs 24hr
+```{r ncp26_time_vs, fig.align="center", echo = FALSE, fig.width= 7, fig.height= 4}
+# Update
+include_graphics(image_path26)
+```
+
+Red points show genes which have increase/decrease over twofold  (abs(x)> 1 log2 FC) for both 6 hour and 24 hour time points.
+
+# Venn diagram of genes differentially expressed {.tabset}
+
+## MAZ13-6hr vs NCP26-6hr
+```{r venn6, fig.align="center", echo = FALSE, fig.width= 7, fig.height= 4}
+image_path_venn_6 <- "Figures/venn_6.png"
+include_graphics(image_path_venn_6)
+```
+The intersection shows genes which are differentially expressed (padj <0.0.5 and abs(foldchange) >= 1) for both MAZ 13 and NCP 26 at the 6 hours time point. <br/>
+MAZ 13 (6hr) only - 70 genes<br/>
+NCP 26 (6hr) only - 14 genes<br/>
+Both (6hr)- 106 genes<br/>
+Total (6hr)- 190 genes<br/>
+
+## MAZ13-24hr vs NCP26- 24hr
+```{r venn24, fig.align="center", echo = FALSE, fig.width= 7, fig.height= 4}
+image_path_venn_24 <- "Figures/venn_24.png"
+include_graphics(image_path_venn_24)
+```
+The intersection shows genes which are differentially expressed (abs(foldchange) >= 1) for both MAZ 13 and NCP 26 at the 24 hours time point.<br/>
+MAZ 13 (24hr) only - 2 genes<br/>
+NCP 26 (24hr) only - 145 genes<br/>
+Both (24hr)- 63 genes<br/>
+Total (24hr)- 210 genes<br/>
+
+# 
+At 6 hours more genes were differentially expressed by MAZ 13, but by the 24 hour time point, MAZ 13 has only 2 unique genes not differentially expressed by NCP 26, whilst NCP 26 at 24 hours has many more differentially expressed genes.
+
+# Venn diagram of transcription factors differentially expressed
+```{r venn_tf, fig.align="center", echo = FALSE, fig.width= 7, fig.height= 4}
+image_path_venn_tf <- "Figures/venn_tf_4way.png"
+include_graphics(image_path_venn_tf)
+```
+4 way cross of transcription factors with significant expression change (abs(log2 fc) >=1 and padj < 0.05 for 6hrs) compared to DMSO controls. <br/>
+TFcheckpoint used. Not all transcription factors included have experimental evidence that they are indeed TFs, but are possible TF candidates.
+
+# AAR genes
+Known genes involved in amino acid starvation response, expected to be upregulated
+```{r AAR, fig.align="center", echo = FALSE, fig.width= 7, fig.height= 4}
+image_path_aar <- "Figures/AAR_genes.png"
+include_graphics(image_path_aar)
+```
+Gene vs mean log2 fc taken across both time points. MAZ 13 shown in pink, NCP 26 shown in green.
+
+```{r libraries, fig.align="center", include = FALSE}
+source("fun.R")
+load("data_objects.RData")
+```
+
+# Top 50 genes with largest log fold change {.tabset}
+## NCP 26- 6hr
+```{r top_26_6, fig.align="center", echo = FALSE, message = FALSE, warning= FALSE}
+dds <- dds_deseq
+contrast <- c("Compound", "26", "DMSO")
+res_lfc <- results_process(dds, contrast = contrast, alpha = 0.05, significant_only = TRUE, foldchange_threshold = FALSE )
+res_lfc$symbols <- convertIDs(rownames(res_lfc),"ENSEMBL", "SYMBOL", org.Hs.eg.db)
+res_lfc_table <- res_lfc[!is.na(res_lfc$symbols), c("log2FoldChange","symbols")]
+res_lfc_table$OverExpressed <- ifelse(res_lfc_table$log2FoldChange >=0, TRUE, FALSE)
+res_lfc_table <- as.data.frame(res_lfc_table)
+res_lfc_table$OverExpressed <- as.factor(res_lfc_table$OverExpressed)
+g<-ggplot(data=res_lfc_table[1:50,], aes(x=symbols, y=log2FoldChange, fill = OverExpressed)) +
+  geom_bar(stat="identity") + theme(axis.text.x = element_text(angle = 90)) + xlab("Gene") + ylab("Log2 Fold Change") +
+  scale_fill_manual(values = c("Red", "Black")) 
+print(g)
+
+```
+
+## NCP 26- 24hr
+```{r top_26_24, fig.align="center", echo = FALSE, message = FALSE, warning= FALSE}
+dds <- dds_deseq24
+contrast <- c("Compound", "26", "DMSO")
+res_lfc <- results_process(dds, contrast = contrast, alpha = 0.05, significant_only = FALSE, foldchange_threshold = 1 )
+res_lfc$symbols <- convertIDs(rownames(res_lfc),"ENSEMBL", "SYMBOL", org.Hs.eg.db)
+res_lfc_table <- res_lfc[!is.na(res_lfc$symbols), c("log2FoldChange","symbols")]
+res_lfc_table$OverExpressed <- ifelse(res_lfc_table$log2FoldChange >=0, TRUE, FALSE)
+res_lfc_table <- as.data.frame(res_lfc_table)
+res_lfc_table$OverExpressed <- as.factor(res_lfc_table$OverExpressed)
+g<-ggplot(data=res_lfc_table[1:50,], aes(x=symbols, y=log2FoldChange, fill = OverExpressed)) +
+  geom_bar(stat="identity") + theme(axis.text.x = element_text(angle = 90)) + xlab("Gene") + ylab("Log2 Fold Change") +
+  scale_fill_manual(values = c("Red", "Black")) 
+print(g)
+
+```
+
+## MAZ 13- 6hr
+```{r top_13_6, fig.align="center", echo = FALSE, message = FALSE, warning= FALSE}
+dds <- dds_deseq
+contrast <- c("Compound", "13", "DMSO")
+res_lfc <- results_process(dds, contrast = contrast, alpha = 0.05, significant_only = TRUE, foldchange_threshold = FALSE )
+res_lfc$symbols <- convertIDs(rownames(res_lfc),"ENSEMBL", "SYMBOL", org.Hs.eg.db)
+res_lfc_table <- res_lfc[!is.na(res_lfc$symbols), c("log2FoldChange","symbols")]
+res_lfc_table$OverExpressed <- ifelse(res_lfc_table$log2FoldChange >=0, TRUE, FALSE)
+res_lfc_table <- as.data.frame(res_lfc_table)
+res_lfc_table$OverExpressed <- as.factor(res_lfc_table$OverExpressed)
+g<-ggplot(data=res_lfc_table[1:50,], aes(x=symbols, y=log2FoldChange, fill = OverExpressed)) +
+  geom_bar(stat="identity") + theme(axis.text.x = element_text(angle = 90)) + xlab("Gene") + ylab("Log2 Fold Change") +
+  scale_fill_manual(values = c("Red", "Black")) 
+print(g)
+
+```
+
+## MAZ 13- 24hr
+```{r top_13_24, fig.align="center", echo = FALSE, message = FALSE, warning= FALSE}
+dds <- dds_deseq24
+contrast <- c("Compound", "13", "DMSO")
+res_lfc <- results_process(dds, contrast = contrast, alpha = 0.05, significant_only = FALSE, foldchange_threshold = 1 )
+res_lfc$symbols <- convertIDs(rownames(res_lfc),"ENSEMBL", "SYMBOL", org.Hs.eg.db)
+res_lfc_table <- res_lfc[!is.na(res_lfc$symbols), c("log2FoldChange","symbols")]
+res_lfc_table$OverExpressed <- ifelse(res_lfc_table$log2FoldChange >=0, TRUE, FALSE)
+res_lfc_table <- as.data.frame(res_lfc_table)
+res_lfc_table$OverExpressed <- as.factor(res_lfc_table$OverExpressed)
+g<-ggplot(data=res_lfc_table[1:50,], aes(x=symbols, y=log2FoldChange, fill = OverExpressed)) +
+  geom_bar(stat="identity") + theme(axis.text.x = element_text(angle = 90)) + xlab("Gene") + ylab("Log2 Fold Change") +
+  scale_fill_manual(values = c("Red", "Black")) 
+print(g)
+
+```
+
+## MAZ 18- 6hr
+```{r top_18_6, fig.align="center", echo = FALSE, message = FALSE, warning= FALSE}
+dds <- dds_deseq
+contrast <- c("Compound", "18", "DMSO")
+res_lfc <- results_process(dds, contrast = contrast, alpha = 0.05, significant_only = TRUE, foldchange_threshold = FALSE )
+res_lfc$symbols <- convertIDs(rownames(res_lfc),"ENSEMBL", "SYMBOL", org.Hs.eg.db)
+res_lfc_table <- res_lfc[!is.na(res_lfc$symbols), c("log2FoldChange","symbols")]
+res_lfc_table$OverExpressed <- ifelse(res_lfc_table$log2FoldChange >=0, TRUE, FALSE)
+res_lfc_table <- as.data.frame(res_lfc_table)
+res_lfc_table$OverExpressed <- as.factor(res_lfc_table$OverExpressed)
+g<-ggplot(data=res_lfc_table[1:50,], aes(x=symbols, y=log2FoldChange, fill = OverExpressed)) +
+  geom_bar(stat="identity") + theme(axis.text.x = element_text(angle = 90)) + xlab("Gene") + ylab("Log2 Fold Change") +
+  scale_fill_manual(values = c("Red", "Black")) 
+print(g)
+
+```
+
+#
+No NCP 22 genes or MAZ 18 (24 hours) were differentially expressed with the cut-off padj < 0.05. 
+For 24 hours, as one DMSO was an outlier, only two control values were being used as reference for differential expression. Therefore padj values were not used as a cut-off, instead abs(log2 fc) > 1 has been used as a threshold.
