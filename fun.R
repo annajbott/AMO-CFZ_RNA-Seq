@@ -142,7 +142,7 @@ pathway_full <- function(dds, contrast, gset, same_direction = TRUE, alpha = 0.0
   return(final)
 }
 # For XGR pathway analysis
-enricher_analysis <- function(dds, contrast, ontology, result_lfc = NULL, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200, same.dir = TRUE, network = FALSE){
+enricher_analysis <- function(dds, contrast, ontology, result_lfc = NULL, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200, same.dir = TRUE){
   if(is.null(result_lfc)){
     result_noshrink <- results(dds, contrast = contrast, alpha = alpha)
     result_lfc <- lfcShrink(dds, contrast = contrast, res = result_noshrink)
@@ -264,4 +264,25 @@ up_regulated <- function(df1, df2){
   }
   return(list(total,average_percent))
 }
+
+enriched_genes_annotation <- function(eterm, pathway_entrez_array, results_useful){
+  ## TCR signalling
+  pathway_name_genes <- c()
+  pathway_name_fc <- c()
+  for(i in 1:length(pathway_entrez_array)){
+    row <- res_dmso_624_useful[res_dmso_624_useful$entrez_id == pathway_entrez_array[[i]],]
+    if(length(rownames(row)) == 1){
+      pathway_name_genes <- c(pathway_name_genes, row$gene_name)
+      pathway_name_fc <- c(pathway_name_fc, row$log2FoldChange)
+    }
+  }
+  # Ordering by absolute log fc change
+  names(pathway_name_fc) <- pathway_name_genes
+  pathway_name_fc <- abs(pathway_name_fc)
+  
+  pathway_name_fc_names <- pathway_name_fc[order(unlist(pathway_name_fc), decreasing=TRUE)]
+  return(names(pathway_name_fc_names))
+}
+
+
   
