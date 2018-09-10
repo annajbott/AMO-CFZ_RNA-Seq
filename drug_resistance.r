@@ -173,7 +173,9 @@ res_dmso_624 <- results_process(dds_all_624, contrast = c("CellType", "CFZ", "WT
 res_dmso_624_useful <- res_useful(res_dmso_624, tf= TRUE, alpha = 0.05)
 
 # XGR
-eTerm_dmso <- enricher_analysis(dds_all_624, c("CellType", "CFZ", "WT"), ontology = "MsigdbC2REACTOME", result_lfc = res_dmso_624, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200)
+eTerm_dmso_ms <- enricher_analysis(dds_all_624, c("CellType", "CFZ", "WT"), ontology = "MsigdbC2REACTOME", result_lfc = res_dmso_624, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200)
+eTerm_dmso <- enricher_analysis(dds_all_624, c("CellType", "CFZ", "WT"), ontology = "REACTOME", result_lfc = res_dmso_624, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200)
+
 # Bar plot
 bp_dmso <- xEnrichBarplot(eTerm_dmso, top_num=10, displayBy="adjp", signature =FALSE)
 print(bp_dmso)
@@ -189,91 +191,44 @@ xVisNet(g=subnet_dmso, pattern=-log10(as.numeric(V(subnet_dmso)$significance)),v
 ################################
 ## Genes in enriched pathways ##
 ################################
-
+# REACTOME Molecular signatures
 ## G alpa signalling
-REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_genes <- c()
-REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_fc <- c()
-for(i in 1:length(eTerm_dmso$annotation$REACTOME_G_ALPHA_I_SIGNALLING_EVENTS)){
-  row <- res_dmso_624_useful[res_dmso_624_useful$entrez_id == eTerm_dmso$annotation$REACTOME_G_ALPHA_I_SIGNALLING_EVENTS[[i]],]
-  if(length(rownames(row)) == 1){
-    REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_genes <- c(REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_genes, row$gene_name)
-    REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_fc <- c(REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_fc, row$log2FoldChange)
-  }
-}
-# Ordering by absolute log fc change
-names(REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_fc) <- REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_genes
-REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_fc <- abs(REACTOME_TCR_SIGNALING_fc)
-
-REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_fc_names <- REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_fc[order(unlist(REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_fc), decreasing=TRUE)]
-paste(names(REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_fc_names), collapse = ", ")
+REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_fc_names <- enriched_genes_annotation(eterm = eTerm_dmso_ms, pathway_entrez_array = eTerm_dmso_ms$annotation$REACTOME_G_ALPHA_I_SIGNALLING_EVENTS, results_useful = res_dmso_624_useful)
+paste(REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_fc_names, collapse = ", ")
 
 ## TCR signalling
-REACTOME_TCR_SIGNALING_genes <- c()
-REACTOME_TCR_SIGNALING_fc <- c()
-for(i in 1:length(eTerm_dmso$annotation$REACTOME_TCR_SIGNALING)){
-  row <- res_dmso_624_useful[res_dmso_624_useful$entrez_id == eTerm_dmso$annotation$REACTOME_TCR_SIGNALING[[i]],]
-  if(length(rownames(row)) == 1){
-    REACTOME_TCR_SIGNALING_genes <- c(REACTOME_TCR_SIGNALING_genes, row$gene_name)
-    REACTOME_TCR_SIGNALING_fc <- c(REACTOME_TCR_SIGNALING_fc, row$log2FoldChange)
-  }
-}
-
-# Ordering by absolute log fc change
-names(REACTOME_TCR_SIGNALING_fc) <- REACTOME_TCR_SIGNALING_genes
-REACTOME_TCR_SIGNALING_fc <- abs(REACTOME_TCR_SIGNALING_fc)
-
-REACTOME_TCR_SIGNALING_fc_names <- REACTOME_TCR_SIGNALING_fc[order(unlist(REACTOME_TCR_SIGNALING_fc), decreasing=TRUE)]
-paste(names(REACTOME_TCR_SIGNALING_fc_names), collapse = ", ")
+REACTOME_TCR_SIGNALING_fc_names <- enriched_genes_annotation(eterm = eTerm_dmso_ms, pathway_entrez_array = eTerm_dmso_ms$annotation$REACTOME_TCR_SIGNALING, results_useful = res_dmso_624_useful)
+paste(REACTOME_TCR_SIGNALING_fc_names, collapse = ", ")
 
 ## Interferon gamma signalling 
-REACTOME_INTERFERON_GAMMA_SIGNALING_genes <- c()
-REACTOME_INTERFERON_GAMMA_SIGNALING_fc <- c()
-for(i in 1:length(eTerm_dmso$annotation$REACTOME_INTERFERON_GAMMA_SIGNALING)){
-  row <- res_dmso_624_useful[res_dmso_624_useful$entrez_id == eTerm_dmso$annotation$REACTOME_INTERFERON_GAMMA_SIGNALING[[i]],]
-  if(length(rownames(row)) == 1){
-    REACTOME_INTERFERON_GAMMA_SIGNALING_genes <- c(REACTOME_INTERFERON_GAMMA_SIGNALING_genes, row$gene_name)
-    REACTOME_INTERFERON_GAMMA_SIGNALING_fc <- c(REACTOME_INTERFERON_GAMMA_SIGNALING_fc, row$log2FoldChange)
-  }
-}
-
-# Ordering by absolute log fc change
-names(REACTOME_INTERFERON_GAMMA_SIGNALING_fc) <- REACTOME_INTERFERON_GAMMA_SIGNALING_genes
-REACTOME_INTERFERON_GAMMA_SIGNALING_fc <- abs(REACTOME_INTERFERON_GAMMA_SIGNALING_fc)
-
-REACTOME_INTERFERON_GAMMA_SIGNALING_fc_names <- REACTOME_INTERFERON_GAMMA_SIGNALING_fc[order(unlist(REACTOME_INTERFERON_GAMMA_SIGNALING_fc), decreasing=TRUE)]
-paste(names(REACTOME_INTERFERON_GAMMA_SIGNALING_fc_names), collapse = ", ")
-
+REACTOME_INTERFERON_GAMMA_SIGNALING_fc_names <- enriched_genes_annotation(eterm = eTerm_dmso_ms, pathway_entrez_array = eTerm_dmso_ms$annotation$REACTOME_INTERFERON_GAMMA_SIGNALING, results_useful = res_dmso_624_useful)
+paste(REACTOME_INTERFERON_GAMMA_SIGNALING_fc_names, collapse = ", ")
 
 ## MHC calss II antigen presentation
-REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_genes <- c()
-REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_fc <- c()
-for(i in 1:length(eTerm_dmso$annotation$REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION)){
-  row <- res_dmso_624_useful[res_dmso_624_useful$entrez_id == eTerm_dmso$annotation$REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION[[i]],]
-  if(length(rownames(row)) == 1){
-    REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_genes <- c(REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_genes, row$gene_name)
-    REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_fc <- c(REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_fc, row$log2FoldChange)
-  }
-}
-# Ordering by absolute log fc change
-names(REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_fc) <- REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_genes
-REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_fc <- abs(REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_fc)
-
-REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_fc_names <- REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_fc[order(unlist(REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_fc), decreasing=TRUE)]
-paste(names(REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_fc_names), collapse = ", ")
+REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_fc_names <- enriched_genes_annotation(eterm = eTerm_dmso_ms, pathway_entrez_array = eTerm_dmso_ms$annotation$REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION, results_useful = res_dmso_624_useful)
+paste(REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_fc_names, collapse = ", ")
 
 ## Semaphorin interactions
-REACTOME_SEMAPHORIN_INTERACTIONS_genes <- c()
-REACTOME_SEMAPHORIN_INTERACTIONS_fc <- c()
-for(i in 1:length(eTerm_dmso$annotation$REACTOME_SEMAPHORIN_INTERACTIONS)){
-  row <- res_dmso_624_useful[res_dmso_624_useful$entrez_id == eTerm_dmso$annotation$REACTOME_SEMAPHORIN_INTERACTION[[i]],]
-  if(length(rownames(row)) == 1){
-    REACTOME_SEMAPHORIN_INTERACTIONS_genes <- c(REACTOME_SEMAPHORIN_INTERACTIONS_genes, row$gene_name)
-    REACTOME_SEMAPHORIN_INTERACTIONS_fc <- c(REACTOME_SEMAPHORIN_INTERACTIONS_fc, row$log2FoldChange)
-  }
-}
-# Ordering by absolute log fc change
-names(REACTOME_SEMAPHORIN_INTERACTIONS_fc) <- REACTOME_SEMAPHORIN_INTERACTIONS_genes
-REACTOME_SEMAPHORIN_INTERACTIONS_fc <- abs(REACTOME_SEMAPHORIN_INTERACTIONS_fc)
+REACTOME_SEMAPHORIN_INTERACTIONS_fc_names <- enriched_genes_annotation(eterm = eTerm_dmso_ms, pathway_entrez_array = eTerm_dmso_ms$annotation$REACTOME_SEMAPHORIN_INTERACTION, results_useful = res_dmso_624_useful)
+paste(REACTOME_SEMAPHORIN_INTERACTIONS_fc_names, collapse = ", ")
 
-REACTOME_SEMAPHORIN_INTERACTIONS_fc_names <- REACTOME_SEMAPHORIN_INTERACTIONS_fc[order(unlist(REACTOME_SEMAPHORIN_INTERACTIONS_fc), decreasing=TRUE)]
-paste(names(REACTOME_SEMAPHORIN_INTERACTIONS_fc_names), collapse = ", ")
+# REACTOME pathways #
+## immunoregulatory interactions between a lymphoid and non-lymphoid cell
+immuno_lymph_names <- enriched_genes_annotation(eterm = eTerm_dmso, pathway_entrez_array = eTerm_dmso$annotation$`R-HSA-198933`, results_useful = res_dmso_624_useful)
+paste(immuno_lymph_names, collapse = ", ")
+
+## Immune system 
+immune_system_names <- enriched_genes_annotation(eterm = eTerm_dmso, pathway_entrez_array = eTerm_dmso$annotation$`R-HSA-168256`, results_useful = res_dmso_624_useful)
+paste(immune_system_names, collapse = ", ")
+
+## Neutrophil degranulation
+neutrophil_degranulation_names <- enriched_genes_annotation(eterm = eTerm_dmso, pathway_entrez_array = eTerm_dmso$annotation$`R-HSA-6798695`, results_useful = res_dmso_624_useful)
+paste(neutrophil_degranulation_names, collapse = ", ")
+
+## Cytokine Signaling in Immune system
+cytokine_signalling_immune_system_names <- enriched_genes_annotation(eterm = eTerm_dmso, pathway_entrez_array = eTerm_dmso$annotation$`R-HSA-1280215`, results_useful = res_dmso_624_useful)
+paste(cytokine_signalling_immune_system_names, collapse = ", ")
+
+## PI3K/AKT Signaling in Cancer
+PI3K_AKT_names <- enriched_genes_annotation(eterm = eTerm_dmso, pathway_entrez_array = eTerm_dmso$annotation$`R-HSA-194315`, results_useful = res_dmso_624_useful)
+paste(PI3K_AKT_names, collapse = ", ")
