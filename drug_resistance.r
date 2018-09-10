@@ -38,6 +38,8 @@ all(colnames(genes_DMSO) == rownames(coldata_DMSO)) # True, same order
 ## Using DESeq2 Package ##
 ## -------------------- ##
 
+# Use cell and timepoint in design
+
 dds_all <-  DESeqDataSetFromMatrix(countData = genes_DMSO,
                                colData = coldata_DMSO,
                                design = CellType~TimePoint)
@@ -74,8 +76,8 @@ head(genes_DMSO)
 coldata_DMSO_6 <- coldata_DMSO[coldata_DMSO$TimePoint == 6,]
 coldata_DMSO_24 <- coldata_DMSO[coldata_DMSO$TimePoint == 24,]
 
-genes_DMSO_6 <- dplyr::select(genes_DMSO, contains("t6"))
-genes_DMSO_24 <- dplyr::select(genes_DMSO, contains("t24"))
+genes_DMSO_6 <- dplyr::select(genes_DMSO, -contains("t24"))
+genes_DMSO_24 <- dplyr::select(genes_DMSO, -contains("t6"))
 
 ## Deseq2 with separate time points ##
 dds_dmso_6 <- dds_get(gene_data = genes_DMSO_6, coldata = coldata_DMSO_6, prefilter = 10, reference = "WT", cell_type = TRUE)
@@ -127,6 +129,8 @@ intersect(dmso_6_tf,dmso_24_tf)
 
 
 ## 6hr vs 24hr ##
+## ----------- ##
+
 # Make sure 6 hr and 24 hr match more or less
 all_res_dsmo_6 <- res_dsmo_6[!(is.na(res_dsmo_6$padj) | res_dsmo_6$padj==""), ]
 all_res_dsmo_24 <- res_dsmo_24[!(is.na(res_dsmo_24$padj) | res_dsmo_24$padj==""), ]
@@ -151,3 +155,125 @@ ggplot(time_vs_dmso, aes(x=log_fold_change_6hr, y=log_fold_change_24hr, color = 
 
 
 time_vs_dmso$average_fc <- (time_vs_dmso$log_fold_change_6hr + time_vs_dmso$log_fold_change_24hr)/2
+###################
+
+# DESeq2
+dds_624 <-  DESeqDataSetFromMatrix(countData = genes_DMSO,
+                                   colData = coldata_DMSO,
+                                   design = ~ TimePoint + CellType)
+# Prefiltering, removing rows with sum of counts under 10 #
+keep <- rowSums(counts(dds_624)) >= 10
+dds_624 <- dds_624[keep,]
+dds_624$CellType <- relevel(dds_624$CellType, ref = "WT")
+
+dds_all_624 <- DESeq(dds_624)
+
+# Results
+res_dmso_624 <- results_process(dds_all_624, contrast = c("CellType", "CFZ", "WT"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = 0)
+res_dmso_624_useful <- res_useful(res_dmso_624, tf= TRUE, alpha = 0.05)
+
+# XGR
+eTerm_dmso <- enricher_analysis(dds_all_624, c("CellType", "CFZ", "WT"), ontology = "MsigdbC2REACTOME", result_lfc = res_dmso_624, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200)
+# Bar plot
+bp_dmso <- xEnrichBarplot(eTerm_dmso, top_num=10, displayBy="adjp", signature =FALSE)
+print(bp_dmso)
+
+# Sub network
+subnet_dmso <- subneter_analysis(dds_all_624, c("CellType", "CFZ", "WT"), ontology = "MsigdbC2REACTOME", alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 500, subnet.size = 25)
+xVisNet(g=subnet_dmso, pattern=-log10(as.numeric(V(subnet_dmso)$significance)),vertex.shape="sphere", colormap="yr", signature = FALSE, newpage = FALSE, vertex.label.dist =0.4)
+#
+
+# compare AMO-CFZ dmso (/ vs WT) with WT treated with CFZ
+# Do MA plot
+
+################################
+## Genes in enriched pathways ##
+################################
+
+## G alpa signalling
+REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_genes <- c()
+REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_fc <- c()
+for(i in 1:length(eTerm_dmso$annotation$REACTOME_G_ALPHA_I_SIGNALLING_EVENTS)){
+  row <- res_dmso_624_useful[res_dmso_624_useful$entrez_id == eTerm_dmso$annotation$REACTOME_G_ALPHA_I_SIGNALLING_EVENTS[[i]],]
+  if(length(rownames(row)) == 1){
+    REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_genes <- c(REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_genes, row$gene_name)
+    REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_fc <- c(REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_fc, row$log2FoldChange)
+  }
+}
+# Ordering by absolute log fc change
+names(REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_fc) <- REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_genes
+REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_fc <- abs(REACTOME_TCR_SIGNALING_fc)
+
+REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_fc_names <- REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_fc[order(unlist(REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_fc), decreasing=TRUE)]
+paste(names(REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_fc_names), collapse = ", ")
+
+## TCR signalling
+REACTOME_TCR_SIGNALING_genes <- c()
+REACTOME_TCR_SIGNALING_fc <- c()
+for(i in 1:length(eTerm_dmso$annotation$REACTOME_TCR_SIGNALING)){
+  row <- res_dmso_624_useful[res_dmso_624_useful$entrez_id == eTerm_dmso$annotation$REACTOME_TCR_SIGNALING[[i]],]
+  if(length(rownames(row)) == 1){
+    REACTOME_TCR_SIGNALING_genes <- c(REACTOME_TCR_SIGNALING_genes, row$gene_name)
+    REACTOME_TCR_SIGNALING_fc <- c(REACTOME_TCR_SIGNALING_fc, row$log2FoldChange)
+  }
+}
+
+# Ordering by absolute log fc change
+names(REACTOME_TCR_SIGNALING_fc) <- REACTOME_TCR_SIGNALING_genes
+REACTOME_TCR_SIGNALING_fc <- abs(REACTOME_TCR_SIGNALING_fc)
+
+REACTOME_TCR_SIGNALING_fc_names <- REACTOME_TCR_SIGNALING_fc[order(unlist(REACTOME_TCR_SIGNALING_fc), decreasing=TRUE)]
+paste(names(REACTOME_TCR_SIGNALING_fc_names), collapse = ", ")
+
+## Interferon gamma signalling 
+REACTOME_INTERFERON_GAMMA_SIGNALING_genes <- c()
+REACTOME_INTERFERON_GAMMA_SIGNALING_fc <- c()
+for(i in 1:length(eTerm_dmso$annotation$REACTOME_INTERFERON_GAMMA_SIGNALING)){
+  row <- res_dmso_624_useful[res_dmso_624_useful$entrez_id == eTerm_dmso$annotation$REACTOME_INTERFERON_GAMMA_SIGNALING[[i]],]
+  if(length(rownames(row)) == 1){
+    REACTOME_INTERFERON_GAMMA_SIGNALING_genes <- c(REACTOME_INTERFERON_GAMMA_SIGNALING_genes, row$gene_name)
+    REACTOME_INTERFERON_GAMMA_SIGNALING_fc <- c(REACTOME_INTERFERON_GAMMA_SIGNALING_fc, row$log2FoldChange)
+  }
+}
+
+# Ordering by absolute log fc change
+names(REACTOME_INTERFERON_GAMMA_SIGNALING_fc) <- REACTOME_INTERFERON_GAMMA_SIGNALING_genes
+REACTOME_INTERFERON_GAMMA_SIGNALING_fc <- abs(REACTOME_INTERFERON_GAMMA_SIGNALING_fc)
+
+REACTOME_INTERFERON_GAMMA_SIGNALING_fc_names <- REACTOME_INTERFERON_GAMMA_SIGNALING_fc[order(unlist(REACTOME_INTERFERON_GAMMA_SIGNALING_fc), decreasing=TRUE)]
+paste(names(REACTOME_INTERFERON_GAMMA_SIGNALING_fc_names), collapse = ", ")
+
+
+## MHC calss II antigen presentation
+REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_genes <- c()
+REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_fc <- c()
+for(i in 1:length(eTerm_dmso$annotation$REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION)){
+  row <- res_dmso_624_useful[res_dmso_624_useful$entrez_id == eTerm_dmso$annotation$REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION[[i]],]
+  if(length(rownames(row)) == 1){
+    REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_genes <- c(REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_genes, row$gene_name)
+    REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_fc <- c(REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_fc, row$log2FoldChange)
+  }
+}
+# Ordering by absolute log fc change
+names(REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_fc) <- REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_genes
+REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_fc <- abs(REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_fc)
+
+REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_fc_names <- REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_fc[order(unlist(REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_fc), decreasing=TRUE)]
+paste(names(REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_fc_names), collapse = ", ")
+
+## Semaphorin interactions
+REACTOME_SEMAPHORIN_INTERACTIONS_genes <- c()
+REACTOME_SEMAPHORIN_INTERACTIONS_fc <- c()
+for(i in 1:length(eTerm_dmso$annotation$REACTOME_SEMAPHORIN_INTERACTIONS)){
+  row <- res_dmso_624_useful[res_dmso_624_useful$entrez_id == eTerm_dmso$annotation$REACTOME_SEMAPHORIN_INTERACTION[[i]],]
+  if(length(rownames(row)) == 1){
+    REACTOME_SEMAPHORIN_INTERACTIONS_genes <- c(REACTOME_SEMAPHORIN_INTERACTIONS_genes, row$gene_name)
+    REACTOME_SEMAPHORIN_INTERACTIONS_fc <- c(REACTOME_SEMAPHORIN_INTERACTIONS_fc, row$log2FoldChange)
+  }
+}
+# Ordering by absolute log fc change
+names(REACTOME_SEMAPHORIN_INTERACTIONS_fc) <- REACTOME_SEMAPHORIN_INTERACTIONS_genes
+REACTOME_SEMAPHORIN_INTERACTIONS_fc <- abs(REACTOME_SEMAPHORIN_INTERACTIONS_fc)
+
+REACTOME_SEMAPHORIN_INTERACTIONS_fc_names <- REACTOME_SEMAPHORIN_INTERACTIONS_fc[order(unlist(REACTOME_SEMAPHORIN_INTERACTIONS_fc), decreasing=TRUE)]
+paste(names(REACTOME_SEMAPHORIN_INTERACTIONS_fc_names), collapse = ", ")
