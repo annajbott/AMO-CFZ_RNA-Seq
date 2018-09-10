@@ -170,12 +170,13 @@ lapply(kegg_26_6_go[[1]], head)
 ## --- ##
 
 library("XGR")
+load("useful_deseq_results.RData")
 ontology <- "MsigdbC2KEGG"
 # Use XGR and deseq2 results for differentially expressed genes in xEnricherGenes function to find key pathways affected
 
 
 eTerm_26_6 <- enricher_analysis(dds_deseq, c("Compound", "26", "DMSO"), ontology = ontology, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200)
-eTerm_13_6 <- enricher_analysis(dds_deseq, c("Compound", "13", "DMSO"), ontology = ontology, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200)
+eTerm_13_6 <- enricher_analysis(dds_deseq, c("Compound", "13", "DMSO"), result_lfc = res_13_6_useful, ontology = ontology, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200)
 
 # Use log fold change threshold rather than q values, as only 2 replicates for DMSO, so SE is not very useful
 eTerm_26_24 <- enricher_analysis(dds_deseq24, c("Compound", "26", "DMSO"), ontology = ontology, alpha = 0.05, foldchange_threshold = 1, number_top_genes = 200)
@@ -195,12 +196,14 @@ bp_Pathway <- xEnrichCompare(list_eTerm, displayBy="fc", FDR.cutoff=5e-3, wrap.w
 bp_Pathway + theme(axis.text.y=element_text(size=10))
 
 
-eTerm_26_6_re <- enricher_analysis(dds_deseq, c("Compound", "26", "DMSO"), ontology = "REACTOME", alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200, same.dir =  TRUE)
-eTerm_13_6_re <- enricher_analysis(dds_deseq, c("Compound", "13", "DMSO"), ontology = "MsigdbC2REACTOME", alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200, same.dir =  TRUE)
+eTerm_26_6_re <- enricher_analysis(dds_deseq, c("Compound", "26", "DMSO"), result_lfc = res_26_6_useful, ontology = "MsigdbC2REACTOME", alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200, same.dir =  TRUE)
+eTerm_13_6_re <- enricher_analysis(dds_deseq, c("Compound", "13", "DMSO"), result_lfc = res_13_6_useful, ontology = "MsigdbC2REACTOME", alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200, same.dir =  TRUE)
+eTerm_13_6_re2 <- enricher_analysis(dds_deseq, c("Compound", "13", "DMSO"), result_lfc = res_13_6_useful, ontology = "REACTOME", alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200, same.dir =  TRUE)
+
 
 # Use log fold change threshold rather than q values, as only 2 replicates for DMSO, so SE is not very useful
-eTerm_26_24_re <- enricher_analysis(dds_deseq24, c("Compound", "26", "DMSO"), ontology = "MsigdbC2REACTOME", foldchange_threshold = 1, number_top_genes = 200, same.dir =  TRUE)
-eTerm_13_24_re <- enricher_analysis(dds_deseq24, c("Compound", "13", "DMSO"), ontology = "MsigdbC2REACTOME", foldchange_threshold = 1, number_top_genes = 200, same.dir =  TRUE)
+eTerm_26_24_re <- enricher_analysis(dds_deseq24, c("Compound", "26", "DMSO"), result_lfc = res_26_24_useful, ontology = "MsigdbC2REACTOME", foldchange_threshold = 1, number_top_genes = 200, same.dir =  TRUE)
+eTerm_13_24_re <- enricher_analysis(dds_deseq24, c("Compound", "13", "DMSO"), result_lfc = res_13_24_useful, ontology = "MsigdbC2REACTOME", foldchange_threshold = 1, number_top_genes = 200, same.dir =  TRUE)
 
 list_eTerm_re <- list(eTerm_26_6_re, eTerm_26_24_re, eTerm_13_6_re, eTerm_13_24_re)
 names(list_eTerm_re) <- c('NCP26- 6hr', 'NCP26- 24hr', 'MAZ13- 6hr', 'MAZ13- 24hr')
