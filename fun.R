@@ -14,13 +14,11 @@ results_process <- function(dds, contrast, alpha, significant_only = TRUE, foldc
   if(significant_only == TRUE){
   result_lfc <- result_lfc[!is.na(result_lfc$padj) & result_lfc$padj<= alpha,]
   # All genes left now are 'statistically significant', so now order by biological significance 
-  # Order by largest magnitude fold change
-  result_lfc <- result_lfc[rev(order(abs(result_lfc$log2FoldChange))),]
   }
   if(foldchange_threshold != FALSE){
     result_lfc <- result_lfc[abs(result_lfc$log2FoldChange) >= foldchange_threshold,]
-    result_lfc <- result_lfc[rev(order(abs(result_lfc$log2FoldChange))),]
   }
+  result_lfc <- result_lfc[rev(order(abs(result_lfc$log2FoldChange))),]
   final <- result_lfc
 }
 
