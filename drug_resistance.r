@@ -103,7 +103,7 @@ bp_Pathway + theme(axis.text.y=element_text(size=10))
 
 
 
-subnet_dmso_6 <- subneter_analysis(dds_dmso_6, c("CellType", "CFZ", "WT"), ontology = "MsigdbC2REACTOME", alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 500)
+subnet_dmso_6 <- subneter_analysis(dds_dmso_6, c("CellType", "CFZ", "WT"),  alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 500, subnet.size = 75)
 xVisNet(g=subnet_dmso_6, pattern=-log10(as.numeric(V(subnet_dmso_6)$significance)),vertex.shape="sphere", colormap="yr", signature = FALSE, newpage = FALSE)
 #
 
@@ -170,19 +170,19 @@ dds_all_624 <- DESeq(dds_624)
 
 # Results
 res_dmso_624 <- results_process(dds_all_624, contrast = c("CellType", "CFZ", "WT"), alpha = 0.05, significant_only = FALSE, foldchange_threshold = 0)
-res_dmso_624_useful <- res_useful(res_dmso_624, tf= TRUE, alpha = 0.05)
+res_dmso_624_useful <- res_useful(res_dmso_624, tf= TRUE, alpha = 1)
 
 # XGR
-eTerm_dmso_ms <- enricher_analysis(dds_all_624, c("CellType", "CFZ", "WT"), ontology = "MsigdbC2REACTOME", result_lfc = res_dmso_624, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200)
-eTerm_dmso <- enricher_analysis(dds_all_624, c("CellType", "CFZ", "WT"), ontology = "REACTOME", result_lfc = res_dmso_624, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200)
+eTerm_dmso_ms <- enricher_analysis(dds_all_624, c("CellType", "CFZ", "WT"), ontology = "MsigdbC2REACTOME", result_lfc = res_dmso_624_useful, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200)
+eTerm_dmso <- enricher_analysis(dds_all_624, c("CellType", "CFZ", "WT"), ontology = "REACTOME", result_lfc = res_dmso_624_useful, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200)
 
 # Bar plot
 bp_dmso <- xEnrichBarplot(eTerm_dmso, top_num=10, displayBy="adjp", signature =FALSE)
 print(bp_dmso)
 
 # Sub network
-subnet_dmso <- subneter_analysis(dds_all_624, c("CellType", "CFZ", "WT"), ontology = "MsigdbC2REACTOME", alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 500, subnet.size = 25)
-xVisNet(g=subnet_dmso, pattern=-log10(as.numeric(V(subnet_dmso)$significance)),vertex.shape="sphere", colormap="yr", signature = FALSE, newpage = FALSE, vertex.label.dist =0.4)
+subnet_dmso <- subneter_analysis(dds_all_624, c("CellType", "CFZ", "WT"), alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 500, subnet.size = 50)
+xVisNet(g=subnet_dmso, pattern=-log10(as.numeric(V(subnet_dmso)$significance)),colorbar = FALSE, vertex.shape="circle", colormap="yr", signature = FALSE, newpage = FALSE, vertex.label.dist =0.45)
 #
 
 # compare AMO-CFZ dmso (/ vs WT) with WT treated with CFZ
