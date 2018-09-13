@@ -183,14 +183,16 @@ enricher_analysis <- function(dds, contrast, ontology, result_lfc = NULL, alpha 
 
 
 # For XGR network subnetergenes
-subneter_analysis <- function(dds, contrast, ontology, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 500, network = "STRING_high", subnet.size=75){
-  result_noshrink <- results(dds, contrast = contrast, alpha = alpha)
-  result_lfc <- lfcShrink(dds, contrast = contrast, res = result_noshrink)
+subneter_analysis <- function(dds, contrast, result_lfc = NULL, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 500, network = "STRING_high", subnet.size=NULL){
+  if(is.null(result_lfc)){
+    result_noshrink <- results(dds, contrast = contrast, alpha = 0.05)
+    result_lfc <- lfcShrink(dds, contrast = contrast, res = result_noshrink)
+  }
   # Use FC instead of p values
   if(foldchange_threshold == TRUE){
     result_lfc <- result_lfc[abs(result_lfc$log2FoldChange) >= foldchange_threshold,]
   }
-  else{
+  else if(alpha != 1){
     result_lfc <- result_lfc[!is.na(result_lfc$padj) & result_lfc$padj<= alpha,]
   }
   result_lfc <- result_lfc[rev(order(abs(result_lfc$log2FoldChange))),]
@@ -203,7 +205,8 @@ subneter_analysis <- function(dds, contrast, ontology, alpha = 0.05, foldchange_
   data <- as.data.frame(result_lfc[,c("data_symbols", "padj")])
   rownames(data) <- NULL
   data <- data[1:number_top_genes,]
-  subnet <- xSubneterGenes(data= data, network= network, subnet.size= subnet.size)
+  # Significance threshold given as default 0.01, if subnet size given will overwrite default of NULL to size and assign new threshold
+  subnet <- xSubneterGenes(data= data, network= network, subnet.significance = 0.01, subnet.size= subnet.size)
   return(subnet)
 }
 
