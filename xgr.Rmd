@@ -16,6 +16,7 @@ load("data_objects.RData")
 ```
 
 ```{r source, include=FALSE, cache = TRUE}
+# Re-cache 13/9/18
 source("fun.R")
 library(knitr)
 ```
@@ -83,30 +84,36 @@ bp_Pathway_re + theme(axis.text.y=element_text(size=10))
 ```
 
 
-## Subnetworks {.tabset}
-### NCP26- 6hr
+# Subnetworks {.tabset}
+Sub-networks created using xSubneterGenes function of XGR package. Uses alorithm from dnet package. Finds maximum scoring network using minimum spanning tree and post processing. Specified to constrain network to 50 nodes maximum. Iteratively finds tolerable p-value threshold to get network of this size. Red indicates more statistically significant, yellow indicates less statistically significant (still about 10^-5). STRING protein-protein interaction database used for information to create network, high confidence (confidence >= 700) interactions only included.
+
+## NCP26- 6hr
 ```{r sub_26_6, fig.align="center", echo = FALSE, cache = TRUE, fig.width= 15, fig.height= 8}
-image_path26_6 <- "Figures/subnetwork_26_6.png"
-image_path26_24 <- "Figures/subnetwork_26_24.png"
-image_path13_6 <- "Figures/subnetwork_13_6.png"
-image_path13_24 <- "Figures/subnetwork_13_24.png"
+image_path26_6 <- "Figures/subnet_26_6_50.png"
+image_path26_24 <- "Figures/subnet_26_24_50.png"
+image_path13_6 <- "Figures/subnet_13_6_50.png"
+image_path13_24 <- "Figures/subnet_13_24_50.png"
 include_graphics(image_path26_6)
 
 ```
 
-### NCP 26- 24hr
+## NCP 26- 24hr
 ```{r sub_26_24, fig.align="center", echo = FALSE, cache = TRUE}
+# 13/9/18 image path
 include_graphics(image_path26_24)
 ```
 
-### MAZ 13- 6hr
+## MAZ 13- 6hr
 ```{r sub_13_6, fig.align="center", echo = FALSE, cache = TRUE, fig.width= 15, fig.height= 8}
+# 13/9/18 image path
 include_graphics(image_path13_6)
 ```
 
-### MAZ 13- 24hr
+## MAZ 13- 24hr
 ```{r sub_13_24, fig.align="center", echo = FALSE, cache = TRUE, fig.width= 15, fig.height= 8}
+# 13/9/18 image path
 include_graphics(image_path13_24)
 ```
 
-##
+#
+Tried Genie 3 package but not sufficient memory (3GB) for it to run, kept crashing R.

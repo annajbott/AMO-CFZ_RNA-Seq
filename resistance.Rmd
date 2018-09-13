@@ -148,6 +148,52 @@ bp_Pathway <- xEnrichCompare(list_eTerm, displayBy="adjp", FDR.cutoff=5e-2, wrap
 bp_Pathway + theme(axis.text.y=element_text(size=10))
 ```
 
+## Time points as batches {.tabset}
+
+### REACTOME
+```{r dmso_all_reactome, fig.align="center", echo = FALSE, warning= FALSE, message= FALSE}
+load("resistance_dmso.RData")
+# load results
+eTerm_dmso <- enricher_analysis(dds_all_624, c("CellType", "CFZ", "WT"), ontology = "REACTOME", result_lfc = res_dmso_624_useful, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200)
+
+# Bar plot
+bp_dmso <- xEnrichBarplot(eTerm_dmso, top_num=10, displayBy="adjp", signature =FALSE)
+print(bp_dmso)
+```
+
+### Molecular signatures REACTOME
+```{r dmso_all_reactome_ms, fig.align="center", echo = FALSE, warning= FALSE, message= FALSE}
+# res all results
+eTerm_dmso_ms <- enricher_analysis(dds_all_624, c("CellType", "CFZ", "WT"), ontology = "MsigdbC2REACTOME", result_lfc = res_dmso_624_useful, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200)
+
+# Bar plot
+bp_dmso <- xEnrichBarplot(eTerm_dmso_ms, top_num=10, displayBy="adjp", signature =FALSE)
+print(bp_dmso)
+
+```
+
+### Molecular signatures KEGG
+```{r dmso_all_kegg_ms, fig.align="center", echo = FALSE, warning= FALSE, message= FALSE}
+# res all results
+eTerm_dmso_ms <- enricher_analysis(dds_all_624, c("CellType", "CFZ", "WT"), ontology = "MsigdbC2KEGG", result_lfc = res_dmso_624_useful, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200)
+
+# Bar plot
+bp_dmso <- xEnrichBarplot(eTerm_dmso_ms, top_num=10, displayBy="adjp", signature =FALSE)
+print(bp_dmso)
+
+```
+
+
+## Sub-network
+Maximum scoring subnetwork using dnet package. Finds using minimum spanning tree method. Specified top scoring 50 genes, then fine tunes p-threshold iteratively. 6 replicates used with model including time point as batch variable.
+
+```{r subnet_resistance, fig.align="center", echo = FALSE, warning= FALSE, message= FALSE}
+# Path
+image_path_sub <- "Figures/resistance_subnet.png"
+include_graphics(image_path_sub)
+
+```
+
 ## Transcription factors
 Loads of them so no venn diagram
 Intersection of TFs from 6hr CFZ vs WT and 24 hr CFZ vs WT differentially expressed genes (padj < 0.05 and abs(log fc) >= 1)

@@ -14,7 +14,8 @@ knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
 library(knitr)
 ```
 
-# Comparison of gene expression accross time points for the two more active compounds
+# 6hr vs 24hr differential expression {.tabset}
+Comparison of gene expression accross time points for the two more active compounds (NCP 22 and MAZ 1392)
 
 ## MAZ 13 6hr vs 24hr
 ```{r maz13_time_vs, fig.align="center", echo = FALSE, fig.width= 7, fig.height= 4}
@@ -31,6 +32,7 @@ include_graphics(image_path13)
 include_graphics(image_path26)
 ```
 
+#
 Red points show genes which have increase/decrease over twofold  (abs(x)> 1 log2 FC) for both 6 hour and 24 hour time points.
 
 # Venn diagram of genes differentially expressed {.tabset}
