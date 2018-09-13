@@ -211,15 +211,15 @@ bp_Pathway_re <- xEnrichCompare(list_eTerm_re, displayBy="fc", FDR.cutoff=5e-4, 
 bp_Pathway_re + theme(axis.text.y=element_text(size=10))
 
 
-subnet_26_6 <- subneter_analysis(dds_deseq, c("Compound", "26", "DMSO"), ontology = "REACTOME", alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 500, subnet.size = 25)
-xVisNet(g=subnet_26_6, pattern=-log10(as.numeric(V(subnet_26_6)$significance)),vertex.shape="sphere", colormap="yr", signature = FALSE, newpage = FALSE, vertex.label.dist =0.4)
+subnet_26_6 <- subneter_analysis(dds_deseq, c("Compound", "26", "DMSO"), result_lfc = res_26_6_useful, alpha = 0.05, number_top_genes = 500, subnet.size = 50)
+xVisNet(g=subnet_26_6, pattern=-log10(as.numeric(V(subnet_26_6)$significance)), colorbar = FALSE, vertex.shape="circle", colormap="yr", signature = FALSE, newpage = FALSE, vertex.label.dist =0.5, vertex.label.cex = 0.7)
 #
-subnet_26_24 <- subneter_analysis(dds_deseq24, c("Compound", "26", "DMSO"), ontology = "REACTOME", foldchange_threshold = 1, number_top_genes = 500, subnet.size = 25)
-xVisNet(g=subnet_26_24, pattern=-log10(as.numeric(V(subnet_26_24)$significance)),vertex.shape="sphere", colormap="yr", signature = FALSE, newpage = FALSE, vertex.label.dist =0.4)
+subnet_26_24 <- subneter_analysis(dds_deseq24, c("Compound", "26", "DMSO"), result_lfc = res_26_24_useful, alpha = 1, number_top_genes = 500, subnet.size = 50)
+xVisNet(g=subnet_26_24, pattern=-log10(as.numeric(V(subnet_26_24)$significance)), colorbar = FALSE, vertex.shape="circle", colormap="yr", signature = FALSE, newpage = FALSE, vertex.label.dist =0.45, vertex.label.cex = 0.75)
 #
-subnet_13_6 <- subneter_analysis(dds_deseq, c("Compound", "13", "DMSO"), ontology = "REACTOME", alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 500,  subnet.size = 25)
-xVisNet(g=subnet_13_6, pattern=-log10(as.numeric(V(subnet_13_6)$significance)),vertex.shape="sphere", colormap="yr", signature = FALSE, newpage = FALSE, vertex.label.dist =0.4)
+subnet_13_6 <- subneter_analysis(dds_deseq, c("Compound", "13", "DMSO"), result_lfc = res_13_6_useful, alpha = 0.05, number_top_genes = 500,  subnet.size = 50)
+xVisNet(g=subnet_13_6, pattern=-log10(as.numeric(V(subnet_13_6)$significance)), colorbar = FALSE, vertex.shape="circle", colormap="yr", signature = FALSE, newpage = FALSE, vertex.label.dist =0.45, vertex.label.cex = 0.75)
 #
-subnet_13_24 <- subneter_analysis(dds_deseq24, c("Compound", "13", "DMSO"), ontology = "REACTOME", foldchange_threshold = 1, number_top_genes = 500, subnet.size = 25)
-xVisNet(g=subnet_13_24, pattern=-log10(as.numeric(V(subnet_13_24)$significance)),vertex.shape="sphere", colormap="yr", signature = FALSE, newpage = FALSE, vertex.label.dist =0.4)
+subnet_13_24 <- subneter_analysis(dds_deseq24, c("Compound", "13", "DMSO"), result_lfc = res_13_24_useful, alpha = 1, number_top_genes = 500, subnet.size = 50)
+xVisNet(g=subnet_13_24, pattern=-log10(as.numeric(V(subnet_13_24)$significance)), colorbar = FALSE, vertex.shape="circle", colormap="yr", signature = FALSE, newpage = FALSE, vertex.label.dist =0.45, vertex.label.cex = 0.75)
 #
