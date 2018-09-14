@@ -29,21 +29,21 @@ IC50_tidy_CFZ_26 <- filter(IC50_tidy_CFZ, Compound == "26")
 # Use Time zero for minimal value to consider, just using average of medium with no cells. Ctrl is treated cells with control so DMSO
 IC50_prop_CFZ_26 <- convertToProp(IC50_tidy_CFZ_26$Fluorescence, T0 = mean_medium, Ctrl = max_dmso)
 np1 <- nplr(x=IC50_tidy_CFZ_26$Concentration, y=IC50_prop_CFZ_26)
-plot(np1, pcol="grey40", lcol="skyblue1", showEstim=0.5, showGOF = FALSE, showInfl=FALSE, main="NCP 26 treated AMO-CFZ cells", cex.main=1.5,xlab=expression(Log[10](Concentration) (uM)), ylab="Proportion")
+plot(np1, pcol="grey40", lcol="skyblue1", showEstim=0.5, showGOF = FALSE, showInfl=FALSE, showCI = FALSE, main="NCP 26 treated AMO-CFZ cells", cex.main=1.5,xlab=expression(Log[10](Concentration) (uM)), ylab="Proportion")
 
 ## NCP 22
 IC50_tidy_CFZ_22 <- filter(IC50_tidy_CFZ, Compound == "22")
 # Use Time zero for minimal value to consider, just using average of medium with no cells. Ctrl is treated cells with control so DMSO
 IC50_prop_CFZ_22 <- convertToProp(IC50_tidy_CFZ_22$Fluorescence, T0 = mean_medium, Ctrl = max_dmso)
 np1 <- nplr(x=IC50_tidy_CFZ_22$Concentration, y=IC50_prop_CFZ_22)
-plot(np1, pcol="grey40", lcol="skyblue1", showEstim=0.5, showGOF = FALSE, showInfl=FALSE, main="NCP 22 treated AMO-CFZ cells", cex.main=1.5,xlab=expression(Log[10](Concentration) (uM)), ylab="Proportion")
+plot(np1, pcol="grey40", lcol="skyblue1", showEstim=0.5, showGOF = FALSE, showInfl=FALSE, showCI = FALSE, main="NCP 22 treated AMO-CFZ cells", cex.main=1.5,xlab=expression(Log[10](Concentration) (uM)), ylab="Proportion")
 
 ## NCP 13
 IC50_tidy_CFZ_13 <- filter(IC50_tidy_CFZ, Compound == "13")
 # Use Time zero for minimal value to consider, just using average of medium with no cells. Ctrl is treated cells with control so DMSO
 IC50_prop_CFZ_13 <- convertToProp(IC50_tidy_CFZ_13$Fluorescence, T0 = mean_medium, Ctrl = max_dmso)
 np1 <- nplr(x=IC50_tidy_CFZ_13$Concentration, y=IC50_prop_CFZ_13)
-plot(np1, pcol="grey40", lcol="skyblue1", showEstim=0.5, showGOF = FALSE, showInfl=FALSE, main="NCP 13 treated AMO-CFZ cells", cex.main=1.5,xlab=expression(Log[10](Concentration) (uM)), ylab="Proportion")
+plot(np1, pcol="grey40", lcol="skyblue1", showEstim=0.5, showGOF = FALSE, showInfl=FALSE, showCI = FALSE, main="NCP 13 treated AMO-CFZ cells", cex.main=1.5,xlab=expression(Log[10](Concentration) (uM)), ylab="Proportion")
 
 
 ## NCP 18
@@ -51,7 +51,7 @@ IC50_tidy_CFZ_18 <- filter(IC50_tidy_CFZ, Compound == "18")
 # Use Time zero for minimal value to consider, just using average of medium with no cells. Ctrl is treated cells with control so DMSO
 IC50_prop_CFZ_18 <- convertToProp(IC50_tidy_CFZ_18$Fluorescence, T0 = mean_medium, Ctrl = max_dmso)
 np1 <- nplr(x=IC50_tidy_CFZ_18$Concentration, y=IC50_prop_CFZ_18)
-plot(np1, pcol="grey40", lcol="skyblue1", showEstim=0.5, showGOF = FALSE, showInfl=FALSE, main="NCP 18 treated AMO-CFZ cells", cex.main=1.5,xlab=expression(Log[10](Concentration) (uM)), ylab="Proportion")
+plot(np1, pcol="grey40", lcol="skyblue1", showEstim=0.5, showCI = FALSE, showGOF = FALSE, showInfl=FALSE,  main="NCP 18 treated AMO-CFZ cells", cex.main=1.5,xlab=expression(Log[10](Concentration) (uM)), ylab="Proportion")
 
 ####
 ### WT ###
@@ -66,26 +66,26 @@ IC50_tidy_WT_26 <- filter(IC50_tidy_WT, Compound == "26")
 # Use Time zero for minimal value to consider, just using average of medium with no cells. Ctrl is treated cells with control so DMSO
 IC50_prop_WT_26 <- convertToProp(IC50_tidy_WT_26$Fluorescence, T0 = mean_medium, Ctrl = max_dmso)
 np1 <- nplr(x=IC50_tidy_WT_26$Concentration, y=IC50_prop_WT_26)
-plot(np1, pcol="grey40", lcol="skyblue1", showEstim=0.5, showGOF = FALSE, showInfl=TRUE, main="NCP 26 treated AMO-WT cells", cex.main=1.5,xlab=expression(Log[10](Concentration) (uM)), ylab="Proportion")
+plot(np1, pcol="grey40", lcol="skyblue1", showEstim=0.5, showGOF = FALSE, showInfl=FALSE, showCI = FALSE, main="NCP 26 treated AMO-WT cells", cex.main=1.5,xlab=expression(Log[10](Concentration) (uM)), ylab="Proportion")
 
 ## NCP 22
 IC50_tidy_WT_22 <- filter(IC50_tidy_WT, Compound == "22")
 # Use Time zero for minimal value to consider, just using average of medium with no cells. Ctrl is treated cells with control so DMSO
 IC50_prop_WT_22 <- convertToProp(IC50_tidy_WT_22$Fluorescence, T0 = mean_medium, Ctrl = max_dmso)
 np1 <- nplr(x=IC50_tidy_WT_22$Concentration, y=IC50_prop_WT_22)
-plot(np1, pcol="grey40", lcol="skyblue1", showEstim=0.5, showGOF = FALSE, showInfl=TRUE, main="NCP 22 treated AMO-WT cells", cex.main=1.5,xlab=expression(Log[10](Concentration) (uM)), ylab="Proportion")
+plot(np1, pcol="grey40", lcol="skyblue1", showEstim=0.5, showGOF = FALSE, showInfl=FALSE, showCI = FALSE, main="NCP 22 treated AMO-WT cells", cex.main=1.5,xlab=expression(Log[10](Concentration) (uM)), ylab="Proportion")
 
 ## MAZ 13
 IC50_tidy_WT_13 <- filter(IC50_tidy_WT, Compound == "13")
 # Use Time zero for minimal value to consider, just using average of medium with no cells. Ctrl is treated cells with control so DMSO
 IC50_prop_WT_13 <- convertToProp(IC50_tidy_WT_13$Fluorescence, T0 = mean_medium, Ctrl = max_dmso)
 np1 <- nplr(x=IC50_tidy_WT_13$Concentration, y=IC50_prop_WT_13)
-plot(np1, pcol="grey40", lcol="skyblue1", showEstim=0.5, showGOF = FALSE, showInfl=TRUE, main="MAZ 13 treated AMO-WT cells", cex.main=1.5,xlab=expression(Log[10](Concentration) (uM)), ylab="Proportion")
+plot(np1, pcol="grey40", lcol="skyblue1", showEstim=0.5, showGOF = FALSE, showInfl=FALSE, showCI = FALSE, main="MAZ 13 treated AMO-WT cells", cex.main=1.5,xlab=expression(Log[10](Concentration) (uM)), ylab="Proportion")
 
 ## MAZ 18
 IC50_tidy_WT_18 <- filter(IC50_tidy_WT, Compound == "18")
 # Use Time zero for minimal value to consider, just using average of medium with no cells. Ctrl is treated cells with control so DMSO
 IC50_prop_WT_18 <- convertToProp(IC50_tidy_WT_18$Fluorescence, T0 = mean_medium, Ctrl = max_dmso)
 np1 <- nplr(x=IC50_tidy_WT_18$Concentration, y=IC50_prop_WT_18)
-plot(np1, pcol="grey40", lcol="skyblue1", showEstim=0.5, showGOF = FALSE, showInfl=TRUE, main="MAZ 18 treated AMO-WT cells", cex.main=1.5,xlab=expression(Log[10](Concentration) (uM)), ylab="Proportion")
+plot(np1, pcol="grey40", lcol="skyblue1", showEstim=0.5, showGOF = FALSE, showInfl=FALSE, showCI = FALSE, main="MAZ 18 treated AMO-WT cells", cex.main=1.5,xlab=expression(Log[10](Concentration) (uM)), ylab="Proportion")
 
