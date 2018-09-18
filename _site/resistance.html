@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+
+<title>Carfilzomib resistance</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<link href="site_libs/font-awesome-5.0.13/css/fa-svg-with-js.css" rel="stylesheet" />
+<script src="site_libs/font-awesome-5.0.13/js/fontawesome-all.min.js"></script>
+<script src="site_libs/font-awesome-5.0.13/js/fa-v4-shims.min.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+
+
+
+
+
+
+<div class="navbar navbar-inverse  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">RNA Seq AMO-CFZ</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="index.html">
+    <span class="fa fa-home"></span>
+     
+    Home
+  </a>
+</li>
+<li>
+  <a href="maplot.html">MA Plots</a>
+</li>
+<li>
+  <a href="pca_plots.html">PCA Plots</a>
+</li>
+<li>
+  <a href="heat_maps.html">Heat Maps</a>
+</li>
+<li>
+  <a href="xgr.html">XGR</a>
+</li>
+<li>
+  <a href="resistance.html">Resistance</a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Carfilzomib resistance</h1>
+
+</div>
+
+
+<div id="amo-1-wt-vs-amo-cfz-cells-treated-with-dmso" class="section level1">
+<h1>AMO-1 (WT) vs AMO-CFZ cells treated with DMSO</h1>
+<p>Exploring differences between cells treated with control. In theory the differences are due to carfilzomib resistance of the cells, gene differential expression might elucidate what is involved in CFZ resistance. But also stored separately since April so could be differences now due to other factors.</p>
+<div id="pca-plot" class="section level2">
+<h2>PCA plot</h2>
+<p>Separated by cell type and time points. <img src="resistance_files/figure-html/pca-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="heat-plot" class="section level2">
+<h2>Heat plot</h2>
+<p><img src="resistance_files/figure-html/heat-1.png" width="672" style="display: block; margin: auto;" /> Large sample distance between CFZ resistant cells and WT cells. Within those groups, separation between 6 hours and 24 hours. Outlier in CFZ t24 group, but still closer to CFZ cells than WT.</p>
+</div>
+<div id="check-cfz-vs-wt-6hr-against-24-hr" class="section level2">
+<h2>Check CFZ vs WT 6hr against 24 hr</h2>
+<p><img src="Figures/drug_res_6hr_vs_24hr.png" width="414" style="display: block; margin: auto;" /> 10561 of 12212 genes are under threshold (86%), i.e gene expression does not increase/decrease by over two-fold (double/halve) from WT to CFZ. 611 genes increase expression, over threshold (more than double), 1040 genes decrease expression, over threshold (more than halve), 37% and 63% respectively. Additionally the most underexpressed genes have a much larger fold change than the most overexpressed genes.<br/> <br/> 5539 genes were differentially expressed (padj &lt;0.05) for 6 hr time points. 722 overexpressed (padj &lt;0.05 and log fc &gt; 1), 1323 underexpressed (padj &lt;0.05 and log fc &lt; -1).</p>
+</div>
+<div id="xgr-pathway-analysis" class="section level2 tabset">
+<h2>XGR pathway analysis</h2>
+<div id="hour" class="section level3">
+<h3>6 hour</h3>
+<p><img src="resistance_files/figure-html/xgr_bp_6-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="hour-1" class="section level3">
+<h3>24 hour</h3>
+<p><img src="resistance_files/figure-html/xgr_bp_24-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="compare" class="section level3">
+<h3>Compare</h3>
+<p><img src="resistance_files/figure-html/xgr_bp_compare-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="time-points-as-batches" class="section level2 tabset">
+<h2>Time points as batches</h2>
+<div id="reactome" class="section level3">
+<h3>REACTOME</h3>
+<p><img src="resistance_files/figure-html/dmso_all_reactome-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="molecular-signatures-reactome" class="section level3">
+<h3>Molecular signatures REACTOME</h3>
+<p><img src="resistance_files/figure-html/dmso_all_reactome_ms-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="molecular-signatures-kegg" class="section level3">
+<h3>Molecular signatures KEGG</h3>
+<p><img src="resistance_files/figure-html/dmso_all_kegg_ms-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="sub-network" class="section level2">
+<h2>Sub-network</h2>
+<p>Maximum scoring subnetwork using dnet package. Finds using minimum spanning tree method. Specified top scoring 50 genes, then fine tunes p-threshold iteratively. 6 replicates used with model including time point as batch variable.</p>
+<p><img src="Figures/resistance_subnet.png" width="414" style="display: block; margin: auto;" /></p>
+</div>
+<div id="transcription-factors" class="section level2">
+<h2>Transcription factors</h2>
+<p>Loads of them so no venn diagram Intersection of TFs from 6hr CFZ vs WT and 24 hr CFZ vs WT differentially expressed genes (padj &lt; 0.05 and abs(log fc) &gt;= 1)</p>
+<div id="upregulated-transcription-factors" class="section level3">
+<h3>Upregulated transcription factors:</h3>
+<pre><code>## [1] &quot;GLIS3, CTDSPL, L3MBTL4, WNT5A, CEBPA, LHX2, TBX2, MYCN, ZNF583, ZNF558, CRY1, ADRB2, FOXJ1, AMOT, PRDM5, RUNX1T1, TEAD4, GTF2IRD2, SEC14L2, JUP, ZNF841, ZNF254, RBFOX2, SALL2, CAND2, MAML2, HABP4, ZNF518B, BATF2, FHL1, ANKRD30A, GTF2H2, DEPTOR, POU3F2, NFIB, ZNF302, KIAA0040, SATB2, NR2F1, ZNF358, ZNF300, TRIM47, NPAS3, HES6, MNX1, ETS1, ZNF132, SIX2, LMO3, DIP2C, XBP1, SCML2, WT1, GTF2IRD2B, MAFB, GLI1, RGS14, NACC2, ESRRB, SSH3, SOX2, SOX11, ONECUT2, WWTR1, HTATIP2, BTBD3, ARID5B, ZNF512B, DMRTA1, BCL11A, SOWAHC, TEAD1, PER3, ZNF736, HMX2, ZEB2, PCBD2, RAPGEF5, NFIC, BOLA1, MFSD3, SHOX2, ENC1, SREBF1, DMTF1, ZNF219, GTF2IRD1, TLE4, KLF11, ZNF251, EME2&quot;</code></pre>
+</div>
+<div id="downregulated-transcription-factors" class="section level3">
+<h3>Downregulated transcription factors:</h3>
+<pre><code>## [1] &quot;KLHL6, CERS6, CDKN1A, SSX2, ZBTB32, PREX1, ZNF160, SOHLH1, SEMA4A, APBB1, RIN3, SP140, PLEK, TP63, ZNF83, FOXP1, TRIP6, CBFA2T3, ZNF175, GAS7, MEIS1, PITX1, MYB, MYEF2, SP140L, RNF144A, IQSEC3, ZNF608, IL16, CRIP1, ZNF362, RORA, ZNF532, CUX2, MACC1, ZHX2, NFATC4, TRIM22, HIC1, MDM2, CIITA, ZNF600, CREB3L4, ZNF320, EYA1, MSC, ZNF516, TCEAL8, HOXD4, ZNF71, PKHD1, BATF3, IRF1, BATF, NCALD, RORB, ZBED3, ZNF93, ZNF737, ERI2, SOHLH2, ZYX, ZNF611, CORO1A, NKX2-5, ARHGEF25, RGCC, STAT1, NFATC1, ZNF695, RAG1, ZNF391, DDB2, PLAGL1, SOX5, POU2AF1, ZNF804A, AFF2, GADD45A, NEUROG2, ERBB2, HHEX, BRIP1, GFI1B, NKD2, ELF3, KLF2, AHRR, KDM5B, ZFHX3, VDR, HOXC6, ZNF287, ARNT, TOX2, ZNF354B, AKNA, EYA4, PRDM15, IFI16, MBNL1, MED10, IFT57, ZNF253, RNF125, BHLHE41, RPS6KA5, HEY1, BLM, STAT5A, ZDHHC11, TCEA2, PCNA, LITAF, HLA-DQB1, SP110, LHX3, SYNE1, ARNTL, RGS9, ZNF292, ESR2, TAF4B, PNRC1, HOXB4, CIR1, TNFAIP3, ZNF682, HMGB1, CDCA7, MIS18BP1, CXXC1, ZNF816, SETDB1, DDIT3, ZMAT3, TBPL1, HMGB2, EAF2, BHLHE40, ID3, ZFP36L2, LPP, ETV5, NFATC2, NFE2L2, ETV6, TRIM9, DAZAP2, MXD1, ATF3, ELF1, CCNE1, KDM3A, SMARCD2, NFXL1, TFB1M, YAF2, HMGN2, ZUFSP, ASB8, GTF3C3, CAND1, CALCOCO1, IRF2, MBD1, ING1&quot;</code></pre>
+</div>
+</div>
+</div>
+
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
