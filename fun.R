@@ -1,13 +1,13 @@
 library(DESeq2)
-library(biomaRt)
+#library(biomaRt)
 library(AnnotationDbi)
 library(org.Hs.eg.db)
-library(gage)
-library(gageData)
+#library(gage)
+#library(gageData)
 library("XGR")
 library(tidyverse)
 
-results_process <- function(dds, contrast, alpha, significant_only = TRUE, foldchange_threshold = FALSE){
+results_process <- function(dds, contrast, alpha, significant_only = TRUE, foldchange_threshold = FALSE, order = TRUE){
   result_noshrink <- results(dds, contrast = contrast, alpha = alpha)
   result_lfc <- lfcShrink(dds, contrast = contrast, res = result_noshrink)
   # keep only non NA adjusted p values and <0.05
@@ -18,7 +18,9 @@ results_process <- function(dds, contrast, alpha, significant_only = TRUE, foldc
   if(foldchange_threshold != FALSE){
     result_lfc <- result_lfc[abs(result_lfc$log2FoldChange) >= foldchange_threshold,]
   }
+  if(order == TRUE){
   result_lfc <- result_lfc[rev(order(abs(result_lfc$log2FoldChange))),]
+  }
   final <- result_lfc
 }
 
@@ -268,7 +270,7 @@ up_regulated <- function(df1, df2){
   return(list(total,average_percent))
 }
 
-enriched_genes_annotation <- function(eterm, pathway_entrez_array, results_useful){
+enriched_genes_annotation <- function(eterm, pathway_entrez_array, results_useful, sig_only = FALSE){
   ## TCR signalling
   pathway_name_genes <- c()
   pathway_name_fc <- c()
@@ -284,8 +286,59 @@ enriched_genes_annotation <- function(eterm, pathway_entrez_array, results_usefu
   pathway_name_fc <- abs(pathway_name_fc)
   
   pathway_name_fc_names <- pathway_name_fc[order(unlist(pathway_name_fc), decreasing=TRUE)]
-  return(names(pathway_name_fc_names))
+  names_list <- names(pathway_name_fc_names)
+  sig_names_list <- c()
+  if(sig_only == TRUE){
+  for(i in 1:length(names_list)){
+    if(!is.na(results_useful[results_useful$gene_name == names_list[i],]$padj) & results_useful[results_useful$gene_name == names_list[i],]$padj < 0.01){
+      sig_names_list <- c(sig_names_list, names_list[i])
+    }
+  }
+    names_list <- sig_names_list
+  }
+  return(names_list)
 }
 
+## Gives count, mean, standard deviation, standard error of the mean, and confidence interval (default 95%).
+##   data: a data frame.
+##   measurevar: the name of a column that contains the variable to be summariezed
+##   groupvars: a vector containing names of columns that contain grouping variables
+##   na.rm: a boolean that indicates whether to ignore NA's
+##   conf.interval: the percent range of the confidence interval (default is 95%)
+summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
+                      conf.interval=.95, .drop=TRUE) {
+  library(plyr)
+  
+  # New version of length which can handle NA's: if na.rm==T, don't count them
+  length2 <- function (x, na.rm=FALSE) {
+    if (na.rm) sum(!is.na(x))
+    else       length(x)
+  }
+  
+  # This does the summary. For each group's data frame, return a vector with
+  # N, mean, and sd
+  datac <- ddply(data, groupvars, .drop=.drop,
+                 .fun = function(xx, col) {
+                   c(N    = length2(xx[[col]], na.rm=na.rm),
+                     mean = mean   (xx[[col]], na.rm=na.rm),
+                     sd   = sd     (xx[[col]], na.rm=na.rm)
+                   )
+                 },
+                 measurevar
+  )
+  
+  # Rename the "mean" column    
+  datac <- rename(datac, c("mean" = measurevar))
+  
+  datac$se <- datac$sd / sqrt(datac$N)  # Calculate standard error of the mean
+  
+  # Confidence interval multiplier for standard error
+  # Calculate t-statistic for confidence interval: 
+  # e.g., if conf.interval is .95, use .975 (above/below), and use df=N-1
+  ciMult <- qt(conf.interval/2 + .5, datac$N-1)
+  datac$ci <- datac$se * ciMult
+  
+  return(datac)
+}
 
   
