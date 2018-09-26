@@ -83,8 +83,8 @@ genes_DMSO_24 <- dplyr::select(genes_DMSO, -contains("t6"))
 dds_dmso_6 <- dds_get(gene_data = genes_DMSO_6, coldata = coldata_DMSO_6, prefilter = 10, reference = "WT", cell_type = TRUE)
 dds_dmso_24 <- dds_get(gene_data = genes_DMSO_24, coldata = coldata_DMSO_24, prefilter = 10, reference = "WT", cell_type = TRUE)
 
-res_dsmo_6 <- results_process(dds_dmso_6, contrast = c("CellType", "CFZ", "WT"), alpha = 0.05, significant_only = FALSE)
-res_dsmo_24 <- results_process(dds_dmso_24, contrast = c("CellType", "CFZ", "WT"), alpha = 0.05, significant_only = FALSE)
+res_dsmo_6 <- results_process(dds_dmso_6, contrast = c("CellType", "CFZ", "WT"), alpha = 0.05, significant_only = FALSE, order = FALSE)
+res_dsmo_24 <- results_process(dds_dmso_24, contrast = c("CellType", "CFZ", "WT"), alpha = 0.05, significant_only = FALSE, order = FALSE)
 
 eTerm_dmso_6 <- enricher_analysis(dds_dmso_6, c("CellType", "CFZ", "WT"), ontology = "MsigdbC2REACTOME", result_lfc = res_dsmo_6, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200)
 
@@ -139,23 +139,27 @@ kept <- all_res_dsmo_6[rownames(all_res_dsmo_6) %in% rownames(all_res_dsmo_24),]
 all(rownames(all_res_dsmo_24) %in% rownames(kept))
 kept2 <- all_res_dsmo_24[rownames(all_res_dsmo_24) %in% rownames(kept),]
 # check in the right order
-all(rownames(kept) == rownames(kept2)) # Right order
+all(rownames(kept) == rownames(kept2)) #TRUE (don't order results table)
 
 # 6hr vs 24 hr DMSO plot (expect all to be along ab line)
 time_vs_dmso <- as.data.frame(cbind(kept$log2FoldChange, kept2$log2FoldChange))
 rownames(time_vs_dmso) <- rownames(kept)
 colnames(time_vs_dmso) <- c("log_fold_change_6hr", "log_fold_change_24hr")
 time_vs_dmso$threshold_status <- ifelse(time_vs_dmso$log_fold_change_6hr >= 1 & time_vs_dmso$log_fold_change_24hr >= 1 | time_vs_dmso$log_fold_change_6hr <= -1 & time_vs_dmso$log_fold_change_24hr <= -1 , TRUE, FALSE)
-ggplot(time_vs_dmso, aes(x=log_fold_change_6hr, y=log_fold_change_24hr, color = threshold_status)) + geom_point() +
+plot3 <- ggplot(time_vs_dmso, aes(x=log_fold_change_6hr, y=log_fold_change_24hr, color = threshold_status)) + geom_point() +
   labs(x = "Log 2 Fold Change WT vs CFZ (DMSO)- 6hr", y =  "Log 2 Fold Change WT vs CFZ (DMSO)- 24hr", color = "Exceed threshold" ) +
   scale_colour_manual(values = c("Black", "Red")) +
   geom_abline(intercept = 0, slope = 1) +
   geom_hline(yintercept = 0) +
   geom_vline(xintercept = 0)
+plot3 + theme(panel.background = element_blank()) 
 
 
 time_vs_dmso$average_fc <- (time_vs_dmso$log_fold_change_6hr + time_vs_dmso$log_fold_change_24hr)/2
 ###################
+
+# Short cut
+load("resistance_dmso.RData")
 
 # DESeq2
 dds_624 <-  DESeqDataSetFromMatrix(countData = genes_DMSO,
@@ -173,16 +177,20 @@ res_dmso_624 <- results_process(dds_all_624, contrast = c("CellType", "CFZ", "WT
 res_dmso_624_useful <- res_useful(res_dmso_624, tf= TRUE, alpha = 1)
 
 # XGR
-eTerm_dmso_ms <- enricher_analysis(dds_all_624, c("CellType", "CFZ", "WT"), ontology = "MsigdbC2REACTOME", result_lfc = res_dmso_624_useful, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200)
-eTerm_dmso <- enricher_analysis(dds_all_624, c("CellType", "CFZ", "WT"), ontology = "REACTOME", result_lfc = res_dmso_624_useful, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200)
+eTerm_dmso_ms <- enricher_analysis(dds_all_624, c("CellType", "CFZ", "WT"), ontology = "MsigdbC2REACTOME", result_lfc = res_dmso_624_useful, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 500)
+eTerm_dmso <- enricher_analysis(dds_all_624, c("CellType", "CFZ", "WT"), ontology = "REACTOME", result_lfc = res_dmso_624_useful, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 500)
+eTerm_dmso_kegg <- enricher_analysis(dds_all_624, c("CellType", "CFZ", "WT"), ontology = "MsigdbC2KEGG", result_lfc = res_dmso_624_useful, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 200)
+
+ATF4_genes <- enriched_genes_annotation(eterm = eTerm_26_6_re, pathway_entrez_array = eTerm_26_6_re$annotation$REACTOME_ACTIVATION_OF_GENES_BY_ATF4, results_useful = res_26_6_useful, sig_only = TRUE)
+
 
 # Bar plot
-bp_dmso <- xEnrichBarplot(eTerm_dmso, top_num=10, displayBy="adjp", signature =FALSE)
+bp_dmso <- xEnrichBarplot(eTerm_dmso_ms, top_num=10, displayBy="adjp", signature =FALSE)
 print(bp_dmso)
 
 # Sub network
-subnet_dmso <- subneter_analysis(dds_all_624, c("CellType", "CFZ", "WT"), alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 500, subnet.size = 50)
-xVisNet(g=subnet_dmso, pattern=-log10(as.numeric(V(subnet_dmso)$significance)),colorbar = FALSE, vertex.shape="circle", colormap="yr", signature = FALSE, newpage = FALSE, vertex.label.dist =0.45)
+subnet_dmso <- subneter_analysis(dds_all_624, c("CellType", "CFZ", "WT"), result_lfc = res_dmso_624_useful, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 500, subnet.size = 50)
+xVisNet(g=subnet_dmso, pattern=-log10(as.numeric(V(subnet_dmso)$significance)),colorbar = FALSE, vertex.shape="circle", colormap="yr", signature = FALSE, newpage = FALSE, vertex.label.dist =0.7, vertex.label.cex = 0.9, vertex.label.color = "black")
 #
 
 # compare AMO-CFZ dmso (/ vs WT) with WT treated with CFZ
@@ -192,25 +200,40 @@ xVisNet(g=subnet_dmso, pattern=-log10(as.numeric(V(subnet_dmso)$significance)),c
 ## Genes in enriched pathways ##
 ################################
 # REACTOME Molecular signatures
-## G alpa signalling
-REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_fc_names <- enriched_genes_annotation(eterm = eTerm_dmso_ms, pathway_entrez_array = eTerm_dmso_ms$annotation$REACTOME_G_ALPHA_I_SIGNALLING_EVENTS, results_useful = res_dmso_624_useful)
-paste(REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_fc_names, collapse = ", ")
+
+## CD3 TCR zeta chains
+REACTOME_CD3_Zeta_fc_names <- enriched_genes_annotation(eterm = eTerm_dmso_ms, pathway_entrez_array = eTerm_dmso_ms$annotation$REACTOME_PHOSPHORYLATION_OF_CD3_AND_TCR_ZETA_CHAINS, results_useful = res_dmso_624_useful, sig_only = TRUE)
+paste(REACTOME_CD3_Zeta_fc_names, collapse = ", ")
+
+## PD1
+REACTOME_PD1_SIGNALINGfc_names <- enriched_genes_annotation(eterm = eTerm_dmso_ms, pathway_entrez_array = eTerm_dmso_ms$annotation$REACTOME_PD1_SIGNALING, results_useful = res_dmso_624_useful, sig_only = TRUE)
+paste(REACTOME_PD1_SIGNALINGfc_names, collapse = ", ")
 
 ## TCR signalling
-REACTOME_TCR_SIGNALING_fc_names <- enriched_genes_annotation(eterm = eTerm_dmso_ms, pathway_entrez_array = eTerm_dmso_ms$annotation$REACTOME_TCR_SIGNALING, results_useful = res_dmso_624_useful)
+REACTOME_TCR_SIGNALING_fc_names <- enriched_genes_annotation(eterm = eTerm_dmso_ms, pathway_entrez_array = eTerm_dmso_ms$annotation$REACTOME_TCR_SIGNALING, results_useful = res_dmso_624_useful, sig_only = TRUE)
 paste(REACTOME_TCR_SIGNALING_fc_names, collapse = ", ")
 
 ## Interferon gamma signalling 
-REACTOME_INTERFERON_GAMMA_SIGNALING_fc_names <- enriched_genes_annotation(eterm = eTerm_dmso_ms, pathway_entrez_array = eTerm_dmso_ms$annotation$REACTOME_INTERFERON_GAMMA_SIGNALING, results_useful = res_dmso_624_useful)
+REACTOME_INTERFERON_GAMMA_SIGNALING_fc_names <- enriched_genes_annotation(eterm = eTerm_dmso_ms, pathway_entrez_array = eTerm_dmso_ms$annotation$REACTOME_INTERFERON_GAMMA_SIGNALING, results_useful = res_dmso_624_useful, sig_only = TRUE)
 paste(REACTOME_INTERFERON_GAMMA_SIGNALING_fc_names, collapse = ", ")
 
+## GPCR downstream signalling
+REACTOME_GPCR_DOWNSTREAM_SIGNALING_fc_names <- enriched_genes_annotation(eterm = eTerm_dmso_ms, pathway_entrez_array = eTerm_dmso_ms$annotation$REACTOME_GPCR_DOWNSTREAM_SIGNALING, results_useful = res_dmso_624_useful, sig_only = TRUE)
+paste(REACTOME_GPCR_DOWNSTREAM_SIGNALING_fc_names, collapse = ", ")
+
+# Immune system
+REACTOME_IMMUNE_SYSTEM_fc_names <- enriched_genes_annotation(eterm = eTerm_dmso_ms, pathway_entrez_array = eTerm_dmso_ms$annotation$REACTOME_IMMUNE_SYSTEM, results_useful = res_dmso_624_useful, sig_only = TRUE)
+paste(REACTOME_IMMUNE_SYSTEM_fc_names, collapse = ", ")
+
+## G alpa signalling
+REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_fc_names <- enriched_genes_annotation(eterm = eTerm_dmso_ms, pathway_entrez_array = eTerm_dmso_ms$annotation$REACTOME_G_ALPHA_I_SIGNALLING_EVENTS, results_useful = res_dmso_624_useful, sig_only = TRUE)
+paste(REACTOME_G_ALPHA_I_SIGNALLING_EVENTS_fc_names, collapse = ", ")
+
 ## MHC calss II antigen presentation
-REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_fc_names <- enriched_genes_annotation(eterm = eTerm_dmso_ms, pathway_entrez_array = eTerm_dmso_ms$annotation$REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION, results_useful = res_dmso_624_useful)
+REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_fc_names <- enriched_genes_annotation(eterm = eTerm_dmso_ms, pathway_entrez_array = eTerm_dmso_ms$annotation$REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION, results_useful = res_dmso_624_useful, sig_only = TRUE)
 paste(REACTOME_MHC_CLASS_II_ANTIGEN_PRESENTATION_fc_names, collapse = ", ")
 
-## Semaphorin interactions
-REACTOME_SEMAPHORIN_INTERACTIONS_fc_names <- enriched_genes_annotation(eterm = eTerm_dmso_ms, pathway_entrez_array = eTerm_dmso_ms$annotation$REACTOME_SEMAPHORIN_INTERACTION, results_useful = res_dmso_624_useful)
-paste(REACTOME_SEMAPHORIN_INTERACTIONS_fc_names, collapse = ", ")
+
 
 # REACTOME pathways #
 ## immunoregulatory interactions between a lymphoid and non-lymphoid cell
@@ -218,7 +241,7 @@ immuno_lymph_names <- enriched_genes_annotation(eterm = eTerm_dmso, pathway_entr
 paste(immuno_lymph_names, collapse = ", ")
 
 ## Immune system 
-immune_system_names <- enriched_genes_annotation(eterm = eTerm_dmso, pathway_entrez_array = eTerm_dmso$annotation$`R-HSA-168256`, results_useful = res_dmso_624_useful)
+immune_system_names <- enriched_genes_annotation(eterm = eTerm_dmso, pathway_entrez_array = eTerm_dmso$annotation$`R-HSA-168256`, results_useful = res_dmso_624_useful, sig_only = FALSE)
 paste(immune_system_names, collapse = ", ")
 
 ## Neutrophil degranulation
@@ -232,3 +255,17 @@ paste(cytokine_signalling_immune_system_names, collapse = ", ")
 ## PI3K/AKT Signaling in Cancer
 PI3K_AKT_names <- enriched_genes_annotation(eterm = eTerm_dmso, pathway_entrez_array = eTerm_dmso$annotation$`R-HSA-194315`, results_useful = res_dmso_624_useful)
 paste(PI3K_AKT_names, collapse = ", ")
+
+
+## Just upregulated ##
+res_dmso_624_up <- res_dmso_624_useful[res_dmso_624_useful$log2FoldChange > 0,]
+eTerm_dmso_up <- enricher_analysis(dds_all_624, c("CellType", "CFZ", "WT"), ontology = "MsigdbC2REACTOME", result_lfc = res_dmso_624_up, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 500)
+
+# Sub network
+subnet_dmso <- subneter_analysis(dds_all_624, c("CellType", "CFZ", "WT"), result_lfc = res_dmso_624_up, alpha = 0.05, foldchange_threshold = FALSE, number_top_genes = 500, subnet.size = 50)
+xVisNet(g=subnet_dmso, pattern=-log10(as.numeric(V(subnet_dmso)$significance)),colorbar = FALSE, vertex.shape="circle", colormap="yr", signature = FALSE, newpage = FALSE, vertex.label.dist =0.7, vertex.label.cex = 0.9, vertex.label.color = "black")
+#
+bp_dmso <- xEnrichBarplot(eTerm_dmso_up, top_num=10, displayBy="adjp", signature =FALSE)
+print(bp_dmso)
+
+REACTOME_A1 <- enriched_genes_annotation(eterm = eTerm_dmso_up, pathway_entrez_array = eTerm_dmso_up$annotation$REACTOME_CLASS_A1_RHODOPSIN_LIKE_RECEPTORS, results_useful = res_dmso_624_up, sig_only = TRUE)
