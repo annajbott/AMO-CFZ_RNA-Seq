@@ -81,3 +81,48 @@ plot_table_tidy <- gather(plot_table,"gene", "Log2FoldChange", -c(Compound, Time
 g <- ggplot(data=plot_table_tidy, aes(x=gene, y=Log2FoldChange, fill = Compound)) +
   geom_bar(stat = "summary", fun.y = "mean", position=position_dodge())+ theme(axis.text.x = element_text(size=rel(1), angle=90))
 print(g)
+
+
+## Joint plots
+
+CFZ_genes <- read.csv("CFZ_genes.csv", row.names = 1, check.names = FALSE)
+coldata <- read.csv("coldata.csv", row.names = 1)
+
+# outlier 24hr: CFZ-DMSO-t24-r2, CFZ-18-t24-r3
+outlier_row_column_list <- c(which(rownames(coldata) == "CFZ-18-t24-r3"),which(rownames(coldata) == "CFZ-DMSO-t24-r2"))
+CFZ_genes <- CFZ_genes[, -outlier_row_column_list]
+coldata_compare <- coldata[-outlier_row_column_list,]
+coldata_compare$CellType <- "CFZ"
+
+# Load WT
+WT_genes <- read.csv("WT_genes.csv", row.names = 1, check.names = FALSE)
+WT_genes_no_carf <- dplyr::select(WT_genes, -contains("carf"))
+coldata_wt <- read.csv("coldata_wt.csv", row.names = 1)
+coldata_wt$Compound <- as.factor(coldata_wt$Compound)
+coldata_wt$CellType <- "WT"
+coldata_wt_compare <- coldata_wt[coldata_wt$Compound != "carf",]
+
+# Bind
+all_genes <- cbind(WT_genes_no_carf,CFZ_genes)
+coldata_all <- rbind(coldata_wt_compare, coldata_compare)
+coldata_all$CellType <- as.factor(coldata_all$CellType)
+coldata_all$TimePoint <- as.factor(coldata_all$TimePoint)
+
+all(rownames(coldata_all) == colnames(all_genes)) # TRUE
+
+# DESeq2
+dds_compare_all <-  DESeqDataSetFromMatrix(countData = all_genes,
+                                   colData = coldata_all,
+                                   design = ~ TimePoint + CellType + Compound)
+# Prefiltering, removing rows with sum of counts under 10 #
+keep <- rowSums(counts(dds_compare_all)) >= 10
+dds_compare_all <- dds_compare_all[keep,]
+dds_compare_all$CellType <- relevel(dds_compare_all$CellType, ref = "WT")
+dds_compare_all$Compound <- relevel(dds_compare_all$Compound, ref = "DMSO")
+dds_compare_all$TimePoint <- relevel(dds_compare_all$TimePoint, ref = "6")
+
+dds_compare_all <- DESeq(dds_compare_all)
+vst_all <- vst(dds_compare_all, blind=FALSE)
+
+plotPCA(vst_all, intgroup=c("CellType","Compound"))
+
